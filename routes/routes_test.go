@@ -31,16 +31,16 @@ func TestHomeHandler(t *testing.T) {
 }
 
 func TestApiHandler(t *testing.T) {
-    req, err:= http.NewRequest("GET", "/api", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
+	req, err := http.NewRequest("GET", "/api", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    rr := httptest.NewRecorder()
-    handler := http.HandlerFunc(apiHandler)
-    handler.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(apiHandler)
+	handler.ServeHTTP(rr, req)
 
-    if status := rr.Code; status != http.StatusOK {
+	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("incorrect status code received: received %v, expected %v",
 			status,
 			http.StatusOK)
@@ -51,5 +51,5 @@ func TestApiHandler(t *testing.T) {
 		t.Errorf("handler returned unexpected body: received %v, expected %v",
 			rr.Body.String(),
 			expected)
-    }
+	}
 }

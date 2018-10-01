@@ -6,7 +6,8 @@ import (
 )
 
 func RegisterHandlers() {
-    http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/api", apiHandler)
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,5 +17,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
-
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text/html")
+	io.WriteString(w, "api")
 }

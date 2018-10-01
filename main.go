@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/Ludusamo/cool-lang-features/routes"
 	"github.com/pborman/getopt"
 	"net/http"
-    "github.com/Ludusamo/cool-lang-features/routes"
-    "strconv"
+	"strconv"
 )
 
 func main() {
@@ -13,5 +13,5 @@ func main() {
 	getopt.Parse()
 	fmt.Println(*portFlag)
 	routes.RegisterHandlers()
-	http.ListenAndServe(":" + strconv.Itoa(*portFlag), nil)
+	http.ListenAndServe(":"+strconv.Itoa(*portFlag), nil)
 }
