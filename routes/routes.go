@@ -14,3 +14,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	io.WriteString(w, "Hello Web!")
 }
+
+func apiHandler(w http.ResponseWriter, r *http.Request) {
+
+}
