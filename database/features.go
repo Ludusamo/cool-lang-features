@@ -11,5 +11,10 @@ type Feature struct {
 }
 
 func (d *Database) AddFeature(name string, desc string) (*Feature, error) {
-    return nil, errors.New("feature could not be created")
+    if _, exists := d.features[name]; exists {
+        return nil, errors.New("feature already exists")
+    }
+    feat := Feature{len(d.features), name, desc}
+    d.features[name] = &feat
+    return &feat, nil
 }

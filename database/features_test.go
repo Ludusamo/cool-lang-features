@@ -38,4 +38,15 @@ func TestAddFeature(t *testing.T) {
             newFeature.description,
             description)
     }
+
+    _, dupErr := db.AddFeature(name, description)
+    if dupErr == nil || dupErr.Error() != "feature already exists" {
+        t.Error("adding a duplicate feature does not fail")
+    }
+
+    other, _ := db.AddFeature("other", description)
+    if other.id != 1{
+        t.Errorf("incorrect id set for new entry: received %v, expected 1",
+            newFeature.id)
+    }
 }
