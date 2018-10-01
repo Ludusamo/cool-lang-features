@@ -1,52 +1,66 @@
 package database
 
 import (
-    "testing"
+	"testing"
 )
 
 func TestAddFeature(t *testing.T) {
-    db := Database{make(map[string]*Feature)}
-    name := "Test Feature"
-    description := "This is an example description."
+	db := Database{make(map[string]*Feature)}
+	name := "Test Feature"
+	description := "This is an example description."
 
-    feat, err := db.AddFeature(name, description)
-    if err != nil {
-        t.Fatal(err)
-    }
+	feat, err := db.AddFeature(name, description)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    newFeature, exists := db.features[name]
-    if !exists {
-        t.Fatal("feature doesn't exist in the database")
-    }
+	newFeature, exists := db.features[name]
+	if !exists {
+		t.Fatal("feature doesn't exist in the database")
+	}
 
-    if feat != newFeature {
-        t.Error("returned feature does not equal retrieved feature")
-    }
+	if feat != newFeature {
+		t.Error("returned feature does not equal retrieved feature")
+	}
 
-    if newFeature.id != 0 {
-        t.Errorf("incorrect id set: received %v, expected 0", newFeature.id)
-    }
+	if newFeature.id != 0 {
+		t.Errorf("incorrect id set: received %v, expected 0", newFeature.id)
+	}
 
-    if newFeature.name != name {
-        t.Errorf("incorrect name set: received %v, expected %v",
-            newFeature.name,
-            name)
-    }
+	if newFeature.name != name {
+		t.Errorf("incorrect name set: received %v, expected %v",
+			newFeature.name,
+			name)
+	}
 
-    if newFeature.description != description {
-        t.Errorf("incorrect description set: received %v, expected %v",
-            newFeature.description,
-            description)
-    }
+	if newFeature.description != description {
+		t.Errorf("incorrect description set: received %v, expected %v",
+			newFeature.description,
+			description)
+	}
 
-    _, dupErr := db.AddFeature(name, description)
-    if dupErr == nil || dupErr.Error() != "feature already exists" {
-        t.Error("adding a duplicate feature does not fail")
-    }
+	_, dupErr := db.AddFeature(name, description)
+	if dupErr == nil || dupErr.Error() != "feature already exists" {
+		t.Error("adding a duplicate feature does not fail")
+	}
 
-    other, _ := db.AddFeature("other", description)
-    if other.id != 1{
-        t.Errorf("incorrect id set for new entry: received %v, expected 1",
-            newFeature.id)
-    }
+	other, _ := db.AddFeature("other", description)
+	if other.id != 1 {
+		t.Errorf("incorrect id set for new entry: received %v, expected 1",
+			newFeature.id)
+	}
+}
+
+func TestRemoveFeature(t *testing.T) {
+	db := Database{make(map[string]*Feature)}
+
+	// Create mock feature
+	name := "test"
+	db.features[name] = &Feature{0, name, ""}
+
+	db.DeleteFeature(name)
+	_, exists := db.features[name]
+	if exists {
+		t.Error("feature still exists after deleting")
+	}
 }
