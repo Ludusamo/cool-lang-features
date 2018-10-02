@@ -29,11 +29,11 @@ go run main.go [--port {port}]
 
 The GoLang code has pretty good test coverage, so you can run the tests that I wrote or manually test it by spinning up the server.
 Currently the routes are as follows:
-- "/": Serves the listing of all the features. From here you can navigate to delete, modify, or add new features
-- "/add": Form to add a new feature
-- "/modify/{id}": Form to modify a feature identified by id
-- "/api/feature": REST API defined here for GET and POST commands to retrieve all features or to add a new one
-- "/api/feature/{id}": REST API defined her for GET, PATCH, and DELETE to retrieve, modify, or delete specific features based on id
+- `/`: Serves the listing of all the features. From here you can navigate to delete, modify, or add new features
+- `/add`: Form to add a new feature
+- `/modify/{id}`: Form to modify a feature identified by id
+- `/api/feature`: REST API defined here for GET and POST commands to retrieve all features or to add a new one
+- `/api/feature/{id}`: REST API defined her for GET, PATCH, and DELETE to retrieve, modify, or delete specific features based on id
 
 ## Other Notes
 
