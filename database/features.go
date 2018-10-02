@@ -5,9 +5,9 @@ import (
 )
 
 type Feature struct {
-    Id          int `json:"id"`
-    Name        string `json:"name"`
-    Description string `json:"description"`
+	Id          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 func (d *Database) AddFeature(name string, desc string) (*Feature, error) {

@@ -12,10 +12,10 @@ func (s *Server) RegisterHandlers() {
 	s.router.HandleFunc("/api", s.apiHandler())
 	s.router.HandleFunc("/api/feature", s.featuresHandler())
 	s.router.HandleFunc("/api/feature/{id:[0-9]+}", s.featureHandler())
-    // Needs to be placed last. These are evaluated in the order they are added
+	// Needs to be placed last. These are evaluated in the order they are added
 	s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        http.ServeFile(w, r, "web/index.html")
-    })
+		http.ServeFile(w, r, "web/index.html")
+	})
 }
 
 func (s *Server) homeHandler() http.HandlerFunc {
