@@ -1,9 +1,10 @@
 package database
 
 type Database struct {
-	features map[string]*Feature
+	featureMap map[string]int
+	features   []*Feature
 }
 
 func CreateDatabase() *Database {
-	return &Database{make(map[string]*Feature)}
+	return &Database{make(map[string]int), make([]*Feature, 0)}
 }
