@@ -1,4 +1,4 @@
-package routes
+package server
 
 import (
 	"net/http"
@@ -13,7 +13,8 @@ func TestHomeHandler(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(homeHandler)
+	server := Server{nil, http.NewServeMux()}
+	handler := http.HandlerFunc(server.homeHandler())
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
@@ -37,7 +38,8 @@ func TestApiHandler(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(apiHandler)
+	server := Server{nil, http.NewServeMux()}
+	handler := http.HandlerFunc(server.apiHandler())
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {

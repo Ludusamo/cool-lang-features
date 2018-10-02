@@ -1,7 +1,6 @@
-package routes
+package server
 
 import (
-	"github.com/Ludusamo/cool-lang-features/server"
 	"io"
 	"net/http"
 )
@@ -11,7 +10,7 @@ func (s *Server) RegisterHandlers() {
 	s.router.HandleFunc("/api", s.apiHandler())
 }
 
-func (s *Server) homeHandler() {
+func (s *Server) homeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "text/html")
@@ -19,7 +18,7 @@ func (s *Server) homeHandler() {
 	}
 }
 
-func (s *Server) apiHandler() {
+func (s *Server) apiHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "text/html")
