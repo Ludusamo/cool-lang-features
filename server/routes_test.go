@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+    "bytes"
 )
 
 func TestHomeHandler(t *testing.T) {
@@ -59,7 +60,7 @@ func TestApiHandler(t *testing.T) {
 	}
 }
 
-func TestFeatureGet(t *testing.T) {
+func TestFeaturesGet(t *testing.T) {
 	req, err := http.NewRequest("GET", "/api/feature", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -90,5 +91,63 @@ func TestFeatureGet(t *testing.T) {
 	}
 	if features[0] != *feat {
 		t.Errorf("expected %v, received %v", feat, features[0])
+	}
+}
+
+func TestFeatureGet(t *testing.T) {
+	req, err := http.NewRequest("GET", "/api/feature/0", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	server := Server{database.CreateDatabase(), mux.NewRouter()}
+    feat, addErr := server.db.AddFeature("Test", "Desc")
+    if addErr != nil {
+        t.Fatal(addErr)
+    }
+    server.router.HandleFunc("/api/feature/{id:[0-9]+}", server.featureHandler())
+	server.router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("incorrect status code received: received %v, expected %v",
+			status,
+			http.StatusOK)
+	}
+
+    var retrievedFeat database.Feature
+	err = json.NewDecoder(rr.Body).Decode(&retrievedFeat)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if retrievedFeat != *feat {
+		t.Errorf("expected %v, received %v", feat, retrievedFeat)
+	}
+}
+
+func TestFeaturePost(t *testing.T) {
+    b := new(bytes.Buffer)
+    json.NewEncoder(b).Encode(
+        map[string]string{"Name": "test", "Description": "desc"})
+	req, err := http.NewRequest("POST", "/api/feature", b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	server := Server{database.CreateDatabase(), mux.NewRouter()}
+	handler := http.HandlerFunc(server.featuresHandler())
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("incorrect status code received: received %v, expected %v",
+			status,
+			http.StatusOK)
+	}
+
+	var newFeature database.Feature
+	err = json.NewDecoder(rr.Body).Decode(&newFeature)
+	if newFeature.Name != "test" {
+		t.Errorf("expected name to be %v, received %v", "test", newFeature.Name)
 	}
 }
