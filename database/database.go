@@ -5,5 +5,5 @@ type Database struct {
 }
 
 func CreateDatabase() *Database {
-    return &Database{make(map[string]*Feature)}
+	return &Database{make(map[string]*Feature)}
 }

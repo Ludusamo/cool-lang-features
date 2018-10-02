@@ -6,7 +6,7 @@ import (
 
 func TestCreateDatabase(t *testing.T) {
 	db := CreateDatabase()
-    if db.features == nil {
-        t.Error("database features was not initialized")
-    }
+	if db.features == nil {
+		t.Error("database features was not initialized")
+	}
 }
