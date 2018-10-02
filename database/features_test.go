@@ -51,6 +51,26 @@ func TestAddFeature(t *testing.T) {
 	}
 }
 
+func TestGetFeature(t *testing.T) {
+    db := Database{make(map[string]*Feature)}
+    name := "Test"
+    db.features[name] = &Feature{0, name, ""}
+
+    feat, err := db.GetFeature(name)
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    if feat.name != name || feat.description != "" {
+        t.Error("feature retrieved does not match expected output")
+    }
+
+    _, dneErr := db.GetFeature("DNE")
+    if dneErr == nil || dneErr.Error() != "feature does not exist" {
+        t.Error("retrieving a feature that does not exist succeeded")
+    }
+}
+
 func TestRemoveFeature(t *testing.T) {
 	db := Database{make(map[string]*Feature)}
 

@@ -19,6 +19,14 @@ func (d *Database) AddFeature(name string, desc string) (*Feature, error) {
 	return &feat, nil
 }
 
+func (d *Database) GetFeature(name string) (*Feature, error) {
+    feat, exists := d.features[name]
+    if exists {
+        return feat, nil
+    }
+    return nil, errors.New("feature does not exist")
+}
+
 func (d *Database) DeleteFeature(name string) {
 	delete(d.features, name)
 }
