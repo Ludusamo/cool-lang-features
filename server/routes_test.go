@@ -1,13 +1,13 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/Ludusamo/cool-lang-features/database"
 	"github.com/gorilla/mux"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-    "bytes"
 )
 
 func TestHomeHandler(t *testing.T) {
@@ -68,10 +68,10 @@ func TestFeaturesGet(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	server := Server{database.CreateDatabase(), mux.NewRouter()}
-    feat, addErr := server.db.AddFeature("Test", "Desc")
-    if addErr != nil {
-        t.Fatal(addErr)
-    }
+	feat, addErr := server.db.AddFeature("Test", "Desc")
+	if addErr != nil {
+		t.Fatal(addErr)
+	}
 	handler := http.HandlerFunc(server.featuresHandler())
 	handler.ServeHTTP(rr, req)
 
@@ -102,11 +102,11 @@ func TestFeatureGet(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	server := Server{database.CreateDatabase(), mux.NewRouter()}
-    feat, addErr := server.db.AddFeature("Test", "Desc")
-    if addErr != nil {
-        t.Fatal(addErr)
-    }
-    server.router.HandleFunc("/api/feature/{id:[0-9]+}", server.featureHandler())
+	feat, addErr := server.db.AddFeature("Test", "Desc")
+	if addErr != nil {
+		t.Fatal(addErr)
+	}
+	server.router.HandleFunc("/api/feature/{id:[0-9]+}", server.featureHandler())
 	server.router.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
@@ -115,7 +115,7 @@ func TestFeatureGet(t *testing.T) {
 			http.StatusOK)
 	}
 
-    var retrievedFeat database.Feature
+	var retrievedFeat database.Feature
 	err = json.NewDecoder(rr.Body).Decode(&retrievedFeat)
 	if err != nil {
 		t.Fatal(err)
@@ -126,9 +126,9 @@ func TestFeatureGet(t *testing.T) {
 }
 
 func TestFeaturePost(t *testing.T) {
-    b := new(bytes.Buffer)
-    json.NewEncoder(b).Encode(
-        map[string]string{"Name": "test", "Description": "desc"})
+	b := new(bytes.Buffer)
+	json.NewEncoder(b).Encode(
+		map[string]string{"Name": "test", "Description": "desc"})
 	req, err := http.NewRequest("POST", "/api/feature", b)
 	if err != nil {
 		t.Fatal(err)
@@ -150,4 +150,30 @@ func TestFeaturePost(t *testing.T) {
 	if newFeature.Name != "test" {
 		t.Errorf("expected name to be %v, received %v", "test", newFeature.Name)
 	}
+}
+
+func TestFeatureDelete(t *testing.T) {
+	req, err := http.NewRequest("DELETE", "/api/feature/0", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	server := Server{database.CreateDatabase(), mux.NewRouter()}
+	_, addErr := server.db.AddFeature("Test", "Desc")
+	if addErr != nil {
+		t.Fatal(addErr)
+	}
+	server.router.HandleFunc("/api/feature/{id:[0-9]+}", server.featureHandler())
+	server.router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("incorrect status code received: received %v, expected %v",
+			status,
+			http.StatusOK)
+	}
+
+    if feat, err := server.db.GetFeature(0); err == nil {
+        t.Errorf("feature still exists in the database: %v", feat)
+    }
 }

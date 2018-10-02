@@ -45,6 +45,7 @@ func (d *Database) DeleteFeature(id int) {
 	if feat != nil {
 		name := d.features[id].Name
 		delete(d.featureMap, name)
+        d.features[id] = nil
 	}
 }
 
