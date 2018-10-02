@@ -6379,11 +6379,29 @@ var author$project$Page$AddFeature$update = F2(
 									['/']),
 								_List_Nil)));
 				} else {
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{errorMsg: 'Failed to add'}),
-						elm$core$Platform$Cmd$none);
+					var err = result.a;
+					switch (err.$) {
+						case 'BadStatus':
+							var res = err.a;
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{errorMsg: res.status.message}),
+								elm$core$Platform$Cmd$none);
+						case 'BadPayload':
+							var res = err.a;
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{errorMsg: res}),
+								elm$core$Platform$Cmd$none);
+						default:
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{errorMsg: 'Failed to add'}),
+								elm$core$Platform$Cmd$none);
+					}
 				}
 		}
 	});
@@ -6546,6 +6564,7 @@ var author$project$Page$AddFeature$Description = function (a) {
 var author$project$Page$AddFeature$Name = function (a) {
 	return {$: 'Name', a: a};
 };
+var elm$html$Html$div = _VirtualDom_node('div');
 var elm$html$Html$h1 = _VirtualDom_node('h1');
 var elm$html$Html$input = _VirtualDom_node('input');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
@@ -6558,6 +6577,8 @@ var elm$html$Html$Attributes$stringProperty = F2(
 			elm$json$Json$Encode$string(string));
 	});
 var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
+var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
 var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
 var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
 var elm$virtual_dom$VirtualDom$Normal = function (a) {
@@ -6647,7 +6668,17 @@ var author$project$Page$AddFeature$view = function (model) {
 						elm$html$Html$Attributes$value('Submit'),
 						elm$html$Html$Events$onClick(author$project$Page$AddFeature$ClickSubmit)
 					]),
-				_List_Nil)
+				_List_Nil),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2(elm$html$Html$Attributes$style, 'color', 'red')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(model.errorMsg)
+					]))
 			]),
 		title: 'Add Feature'
 	};
@@ -6720,8 +6751,6 @@ var elm$html$Html$Attributes$href = function (url) {
 		'href',
 		_VirtualDom_noJavaScriptUri(url));
 };
-var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
 var author$project$Page$FeatureList$view = function (model) {
 	return {
 		body: _List_fromArray(
@@ -6802,7 +6831,6 @@ var author$project$Page$NotFound$view = function (toMsg) {
 		title: 'Page Not Found'
 	};
 };
-var elm$html$Html$div = _VirtualDom_node('div');
 var elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
 var elm$html$Html$map = elm$virtual_dom$VirtualDom$map;
 var author$project$Skeleton$view = F2(
