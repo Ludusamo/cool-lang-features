@@ -106,7 +106,7 @@ func TestDeleteFeature(t *testing.T) {
 	db.DeleteFeature(0)
 	feat := db.features[0]
 	_, exists := db.featureMap[name]
-	if feat == nil || exists {
+	if feat != nil || exists {
 		t.Error("feature still exists after deleting")
 	}
 

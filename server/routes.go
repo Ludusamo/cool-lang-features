@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Server) RegisterHandlers() {
-	s.router.HandleFunc("/", s.homeHandler())
+	s.router.Handle("/", http.FileServer(http.Dir("./web")))
 	s.router.HandleFunc("/api", s.apiHandler())
 	s.router.HandleFunc("/api/feature", s.featuresHandler())
 	s.router.HandleFunc("/api/feature/{id:[0-9]+}", s.featureHandler())
