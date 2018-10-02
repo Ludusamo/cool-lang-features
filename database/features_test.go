@@ -51,6 +51,30 @@ func TestAddFeature(t *testing.T) {
 	}
 }
 
+func TestGetFeatures(t *testing.T) {
+	db := Database{make(map[string]int), make([]*Feature, 2)}
+	db.features[0] = &Feature{0, "First", ""}
+	db.features[1] = &Feature{1, "Second", ""}
+
+	features := db.GetFeatures()
+	if features == nil {
+		t.Fatal("no features retrieved")
+	}
+	if len(features) != 2 {
+		t.Fatal("features does not have the right amount of elements")
+	}
+	if features[0].name != "First" {
+		t.Errorf("expected first element name to be %v, received %v",
+			"First",
+			features[0].name)
+	}
+	if features[1].name != "Second" {
+		t.Errorf("expected first element name to be %v, received %v",
+			"Second",
+			features[1].name)
+	}
+}
+
 func TestGetFeature(t *testing.T) {
 	db := Database{make(map[string]int), make([]*Feature, 1)}
 	name := "Test"

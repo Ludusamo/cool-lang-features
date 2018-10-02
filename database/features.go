@@ -22,6 +22,10 @@ func (d *Database) AddFeature(name string, desc string) (*Feature, error) {
 	return &feat, nil
 }
 
+func (d *Database) GetFeatures() []*Feature {
+	return d.features
+}
+
 func (d *Database) GetFeature(id int) (*Feature, error) {
 	if id >= len(d.features) {
 		return nil, errors.New("feature does not exist")
