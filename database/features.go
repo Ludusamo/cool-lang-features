@@ -5,9 +5,9 @@ import (
 )
 
 type Feature struct {
-	id          int
-	name        string
-	description string
+	Id          int
+	Name        string
+	Description string
 }
 
 func (d *Database) AddFeature(name string, desc string) (*Feature, error) {
@@ -43,7 +43,7 @@ func (d *Database) DeleteFeature(id int) {
 	}
 	feat := d.features[id]
 	if feat != nil {
-		name := d.features[id].name
+		name := d.features[id].Name
 		delete(d.featureMap, name)
 	}
 }
@@ -54,12 +54,12 @@ func (d *Database) ModifyFeature(id int, name string, desc string) (*Feature, er
 	}
 	feat := d.features[id]
 	if feat != nil {
-		if feat.name != name {
-			delete(d.featureMap, feat.name)
+		if feat.Name != name {
+			delete(d.featureMap, feat.Name)
 			d.featureMap[name] = id
-			feat.name = name
+			feat.Name = name
 		}
-		feat.description = desc
+		feat.Description = desc
 		return feat, nil
 	}
 	return nil, errors.New("feature does not exist")

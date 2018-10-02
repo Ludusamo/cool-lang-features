@@ -23,19 +23,19 @@ func TestAddFeature(t *testing.T) {
 		t.Error("returned feature does not equal retrieved feature")
 	}
 
-	if newFeature.id != 0 {
-		t.Errorf("incorrect id set: received %v, expected 0", newFeature.id)
+	if newFeature.Id != 0 {
+		t.Errorf("incorrect id set: received %v, expected 0", newFeature.Id)
 	}
 
-	if newFeature.name != name {
+	if newFeature.Name != name {
 		t.Errorf("incorrect name set: received %v, expected %v",
-			newFeature.name,
+			newFeature.Name,
 			name)
 	}
 
-	if newFeature.description != description {
+	if newFeature.Description != description {
 		t.Errorf("incorrect description set: received %v, expected %v",
-			newFeature.description,
+			newFeature.Description,
 			description)
 	}
 
@@ -45,9 +45,9 @@ func TestAddFeature(t *testing.T) {
 	}
 
 	other, _ := db.AddFeature("other", description)
-	if other.id != 1 {
+	if other.Id != 1 {
 		t.Errorf("incorrect id set for new entry: received %v, expected 1",
-			newFeature.id)
+			newFeature.Id)
 	}
 }
 
@@ -63,15 +63,15 @@ func TestGetFeatures(t *testing.T) {
 	if len(features) != 2 {
 		t.Fatal("features does not have the right amount of elements")
 	}
-	if features[0].name != "First" {
+	if features[0].Name != "First" {
 		t.Errorf("expected first element name to be %v, received %v",
 			"First",
-			features[0].name)
+			features[0].Name)
 	}
-	if features[1].name != "Second" {
+	if features[1].Name != "Second" {
 		t.Errorf("expected first element name to be %v, received %v",
 			"Second",
-			features[1].name)
+			features[1].Name)
 	}
 }
 
@@ -85,7 +85,7 @@ func TestGetFeature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if feat.name != name || feat.description != "" {
+	if feat.Name != name || feat.Description != "" {
 		t.Error("feature retrieved does not match expected output")
 	}
 
@@ -128,9 +128,9 @@ func TestModifyFeature(t *testing.T) {
 	if modifiedFeat != db.features[0] {
 		t.Error("returned features does not match feature in database")
 	}
-	if modifiedFeat.description != newDesc {
+	if modifiedFeat.Description != newDesc {
 		t.Errorf("incorrect description set: received %v, expected %v",
-			modifiedFeat.description,
+			modifiedFeat.Description,
 			newDesc)
 	}
 
@@ -143,9 +143,9 @@ func TestModifyFeature(t *testing.T) {
 	if modifiedFeat != db.features[0] {
 		t.Error("returned features does not match feature in database")
 	}
-	if modifiedFeat.name != newName {
+	if modifiedFeat.Name != newName {
 		t.Errorf("incorrect name set: received %v, expected %v",
-			modifiedFeat.name,
+			modifiedFeat.Name,
 			newName)
 	}
 
