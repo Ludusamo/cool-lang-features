@@ -64,3 +64,30 @@ func TestRemoveFeature(t *testing.T) {
 		t.Error("feature still exists after deleting")
 	}
 }
+
+func TestModifyFeature(t *testing.T) {
+	db := Database{make(map[string]*Feature)}
+	name := "Test"
+	db.features[name] = &Feature{0, name, ""}
+
+	// Modify description
+	newDesc := "New Description"
+	modifiedFeat, err := db.ModifyFeature(name, newDesc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if modifiedFeat != db.features[name] {
+		t.Error("returned features does not match feature in database")
+	}
+	if modifiedFeat.description != newDesc {
+		t.Errorf("incorrect description set: received %v, expected %v",
+			modifiedFeat.description,
+			newDesc)
+	}
+
+	// Trying to modify a feature that doesn't exist
+	_, dneErr := db.ModifyFeature("DNE", "Some Description")
+	if dneErr == nil || dneErr.Error() != "feature does not exist" {
+		t.Error("error did not come back for a feature that does not exist")
+	}
+}
