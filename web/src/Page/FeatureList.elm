@@ -1,8 +1,8 @@
-module Page.FeatureList exposing (Model, Msg, init, update, view)
+module Page.FeatureList exposing (Feature, Model, Msg, featureDecoder, init, update, view)
 
 import Browser
-import Html exposing (Html, button, h1, table, td, text, th, thead, tr)
-import Html.Attributes exposing (style)
+import Html exposing (Html, a, button, h1, table, td, text, th, thead, tr)
+import Html.Attributes exposing (href, style)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
@@ -90,6 +90,7 @@ view model =
                 ]
                 (List.map featureRow model.features)
             )
+        , a [ href "/add" ] [ text "Add" ]
         ]
     }
 

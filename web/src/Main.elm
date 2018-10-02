@@ -4,6 +4,7 @@ import Browser
 import Browser.Navigation as Nav
 import Html exposing (Html, div)
 import Http
+import Page.AddFeature as AddFeature
 import Page.FeatureList as FeatureList
 import Page.NotFound as NotFound
 import Skeleton
@@ -45,6 +46,7 @@ type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | FeatureListMsg FeatureList.Msg
+    | AddFeatureMsg AddFeature.Msg
     | NoOp
 
 
@@ -58,6 +60,14 @@ update msg model =
             case model.page of
                 FeatureListPage pageModel ->
                     featureList model (FeatureList.update message pageModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        AddFeatureMsg message ->
+            case model.page of
+                AddFeaturePage pageModel ->
+                    addFeature model (AddFeature.update message pageModel)
 
                 _ ->
                     ( model, Cmd.none )
@@ -100,8 +110,8 @@ view model =
         FeatureListPage featurelistModel ->
             Skeleton.view FeatureListMsg (FeatureList.view featurelistModel)
 
-        AddFeature ->
-            NotFound.view never
+        AddFeaturePage addFeatureModel ->
+            Skeleton.view AddFeatureMsg (AddFeature.view addFeatureModel)
 
         EditFeature _ ->
             NotFound.view never
@@ -113,7 +123,7 @@ view model =
 
 type Page
     = FeatureListPage FeatureList.Model
-    | AddFeature
+    | AddFeaturePage AddFeature.Model
     | EditFeature Int
     | NotFound
 
@@ -122,6 +132,7 @@ routeParser : Model -> Parser (( Model, Cmd Msg ) -> a) a
 routeParser model =
     oneOf
         [ route top (featureList model FeatureList.init)
+        , route (s "add") (addFeature model AddFeature.init)
         ]
 
 
@@ -129,6 +140,13 @@ featureList : Model -> ( FeatureList.Model, Cmd FeatureList.Msg ) -> ( Model, Cm
 featureList model ( features, cmds ) =
     ( { model | page = FeatureListPage features }
     , Cmd.map FeatureListMsg cmds
+    )
+
+
+addFeature : Model -> ( AddFeature.Model, Cmd AddFeature.Msg ) -> ( Model, Cmd Msg )
+addFeature model ( addModel, cmds ) =
+    ( { model | page = AddFeaturePage addModel }
+    , Cmd.map AddFeatureMsg cmds
     )
 
 
