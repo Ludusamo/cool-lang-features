@@ -139,10 +139,10 @@ func TestFeaturePost(t *testing.T) {
 	handler := http.HandlerFunc(server.featuresHandler())
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusOK {
+	if status := rr.Code; status != http.StatusCreated {
 		t.Errorf("incorrect status code received: received %v, expected %v",
 			status,
-			http.StatusOK)
+			http.StatusCreated)
 	}
 
 	var newFeature database.Feature
@@ -173,7 +173,46 @@ func TestFeatureDelete(t *testing.T) {
 			http.StatusOK)
 	}
 
-    if feat, err := server.db.GetFeature(0); err == nil {
-        t.Errorf("feature still exists in the database: %v", feat)
-    }
+	if feat, err := server.db.GetFeature(0); err == nil {
+		t.Errorf("feature still exists in the database: %v", feat)
+	}
+}
+
+func TestFeaturePatch(t *testing.T) {
+	b := new(bytes.Buffer)
+	json.NewEncoder(b).Encode(
+		map[string]string{"Name": "New Name", "Description": "New Desc"})
+	req, err := http.NewRequest("PATCH", "/api/feature/0", b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	server := Server{database.CreateDatabase(), mux.NewRouter()}
+	feat, addErr := server.db.AddFeature("Test", "Desc")
+	if addErr != nil {
+		t.Fatal(addErr)
+	}
+	server.router.HandleFunc("/api/feature/{id:[0-9]+}", server.featureHandler())
+	server.router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("incorrect status code received: received %v, expected %v",
+			status,
+			http.StatusOK)
+	}
+
+	var modifiedFeat database.Feature
+	err = json.NewDecoder(rr.Body).Decode(&modifiedFeat)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if modifiedFeat != *feat {
+		t.Errorf("expected %v, received %v", feat, modifiedFeat)
+	}
+	if modifiedFeat.Name != "New Name" {
+		t.Errorf("expected name to be %v, received %v",
+			"New Name",
+			modifiedFeat.Name)
+	}
 }

@@ -12,6 +12,7 @@ func (s *Server) RegisterHandlers() {
 	s.router.HandleFunc("/", s.homeHandler())
 	s.router.HandleFunc("/api", s.apiHandler())
 	s.router.HandleFunc("/api/feature", s.featuresHandler())
+	s.router.HandleFunc("/api/feature/{id:[0-9]+}", s.featureHandler())
 }
 
 func (s *Server) homeHandler() http.HandlerFunc {
@@ -49,6 +50,7 @@ func (s *Server) featuresHandler() http.HandlerFunc {
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(err)
 			} else {
+				w.WriteHeader(http.StatusCreated)
 				json.NewEncoder(w).Encode(feat)
 			}
 		}
@@ -58,12 +60,12 @@ func (s *Server) featuresHandler() http.HandlerFunc {
 func (s *Server) featureHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-        id, parseErr := strconv.Atoi(vars["id"])
-        if parseErr != nil {
-            w.WriteHeader(http.StatusBadRequest)
-            json.NewEncoder(w).Encode(parseErr)
-            return
-        }
+		id, parseErr := strconv.Atoi(vars["id"])
+		if parseErr != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(parseErr)
+			return
+		}
 		switch r.Method {
 		case "GET":
 			feat, err := s.db.GetFeature(id)
@@ -74,9 +76,23 @@ func (s *Server) featureHandler() http.HandlerFunc {
 				json.NewEncoder(w).Encode(feat)
 			}
 		case "PATCH":
+			var featurePatch struct {
+				Name        string
+				Description string
+			}
+			json.NewDecoder(r.Body).Decode(&featurePatch)
+			feat, err := s.db.ModifyFeature(id,
+				featurePatch.Name,
+				featurePatch.Description)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(err)
+			} else {
+				json.NewEncoder(w).Encode(feat)
+			}
 		case "DELETE":
-            s.db.DeleteFeature(id)
-            w.WriteHeader(http.StatusOK)
+			s.db.DeleteFeature(id)
+			w.WriteHeader(http.StatusOK)
 		}
 	}
 }
