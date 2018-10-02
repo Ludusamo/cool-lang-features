@@ -1,7 +1,11 @@
-module Page.FeatureList exposing (Model, Msg, init, view)
+module Page.FeatureList exposing (Model, Msg, init, update, view)
 
 import Browser
 import Html exposing (Html, h1, table, td, text, th, thead, tr)
+import Html.Attributes exposing (style)
+import Http
+import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
+import Skeleton
 
 
 
@@ -9,7 +13,7 @@ import Html exposing (Html, h1, table, td, text, th, thead, tr)
 
 
 type alias Feature =
-    { id : String
+    { id : Int
     , name : String
     , description : String
     }
@@ -25,7 +29,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model [], Cmd.none )
+    ( Model [], retrieveFeatures )
 
 
 
@@ -33,19 +37,33 @@ init =
 
 
 type Msg
-    = RetrievingFeatures
+    = RetrieveFeatures (Result Http.Error (List Feature))
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        RetrieveFeatures result ->
+            case result of
+                Ok features ->
+                    ( { model | features = features }, Cmd.none )
+
+                Err _ ->
+                    Debug.log
+                        "Failed to retrieve features"
+                        ( model, Cmd.none )
 
 
 
 -- View
 
 
-view : (a -> msg) -> Model -> Browser.Document msg
-view toMsg model =
+view : Model -> Skeleton.Details msg
+view model =
     { title = "Feature List"
     , body =
         [ h1 [] [ text "Cool Programming Language Features" ]
-        , table []
+        , table [ style "border" "1px solid black" ]
             (List.append
                 [ thead []
                     [ th [] [ text "ID" ]
@@ -63,8 +81,30 @@ featureRow : Feature -> Html msg
 featureRow feat =
     tr []
         [ td []
-            [ text feat.id
-            , text feat.name
-            , text feat.description
-            ]
+            [ text (String.fromInt feat.id) ]
+        , td []
+            [ text feat.name ]
+        , td [] [ text feat.description ]
         ]
+
+
+
+-- HTTP
+
+
+featureDecoder : Decoder Feature
+featureDecoder =
+    map3 Feature
+        (field "id" int)
+        (field "name" string)
+        (field "description" string)
+
+
+featureListDecoder : Decoder (List Feature)
+featureListDecoder =
+    Decode.list featureDecoder
+
+
+retrieveFeatures : Cmd Msg
+retrieveFeatures =
+    Http.send RetrieveFeatures (Http.get "/api/feature" featureListDecoder)

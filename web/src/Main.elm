@@ -6,6 +6,7 @@ import Html exposing (Html, div)
 import Http
 import Page.FeatureList as FeatureList
 import Page.NotFound as NotFound
+import Skeleton
 import Url
 import Url.Parser exposing ((</>), Parser, int, map, oneOf, parse, s, top)
 
@@ -23,7 +24,7 @@ main =
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
-    ( Model (FeatureList (FeatureList.Model [])) key, Cmd.none )
+    selectRoute url { page = NotFound, key = key }
 
 
 
@@ -31,7 +32,7 @@ init _ url key =
 
 
 type alias Model =
-    { page : Route
+    { page : Page
     , key : Nav.Key
     }
 
@@ -53,8 +54,13 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        FeatureListMsg _ ->
-            ( model, Cmd.none )
+        FeatureListMsg message ->
+            case model.page of
+                FeatureListPage pageModel ->
+                    featureList model (FeatureList.update message pageModel)
+
+                _ ->
+                    ( model, Cmd.none )
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -91,8 +97,8 @@ view model =
         NotFound ->
             NotFound.view never
 
-        FeatureList featurelistModel ->
-            FeatureList.view FeatureListMsg featurelistModel
+        FeatureListPage featurelistModel ->
+            Skeleton.view FeatureListMsg (FeatureList.view featurelistModel)
 
         AddFeature ->
             NotFound.view never
@@ -105,29 +111,32 @@ view model =
 -- Router
 
 
-type Route
-    = FeatureList FeatureList.Model
+type Page
+    = FeatureListPage FeatureList.Model
     | AddFeature
     | EditFeature Int
     | NotFound
 
 
-routeParser : Parser (Route -> a) a
-routeParser =
+routeParser : Model -> Parser (( Model, Cmd Msg ) -> a) a
+routeParser model =
     oneOf
-        [ map (FeatureList (FeatureList.Model [])) top
-        , map AddFeature (s "add")
-        , map EditFeature (s "edit" </> int)
+        [ route top (featureList model FeatureList.init)
         ]
+
+
+featureList : Model -> ( FeatureList.Model, Cmd FeatureList.Msg ) -> ( Model, Cmd Msg )
+featureList model ( features, cmds ) =
+    ( { model | page = FeatureListPage features }
+    , Cmd.map FeatureListMsg cmds
+    )
 
 
 selectRoute : Url.Url -> Model -> ( Model, Cmd Msg )
 selectRoute url model =
-    case parse routeParser url of
+    case parse (routeParser model) url of
         Just answer ->
-            ( { model | page = answer }
-            , Cmd.none
-            )
+            answer
 
         Nothing ->
             ( { model | page = NotFound }
@@ -135,5 +144,6 @@ selectRoute url model =
             )
 
 
-
--- Http
+route : Parser a b -> a -> Parser (b -> c) c
+route parser handler =
+    map handler parser
