@@ -8,6 +8,9 @@ import (
 	"strconv"
 )
 
+/** Registers handlers for all the different routes on the server
+ * @lhs server pointer
+ */
 func (s *Server) RegisterHandlers() {
 	s.router.HandleFunc("/api", s.apiHandler())
 	s.router.HandleFunc("/api/feature", s.featuresHandler())
@@ -18,14 +21,10 @@ func (s *Server) RegisterHandlers() {
 	})
 }
 
-func (s *Server) homeHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "text/html")
-		io.WriteString(w, "Hello Web!")
-	}
-}
-
+/** Handler for the /api route
+ * @lhs server pointer
+ * @return Handler function for router
+ */
 func (s *Server) apiHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -34,6 +33,10 @@ func (s *Server) apiHandler() http.HandlerFunc {
 	}
 }
 
+/** Handler for /api/feature for adding and retrieving features
+ * @lhs server pointer
+ * @return Handler function for router
+ */
 func (s *Server) featuresHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -60,6 +63,11 @@ func (s *Server) featuresHandler() http.HandlerFunc {
 	}
 }
 
+/** Handler for /api/feature/{id} for modifying, deleting and retrieving
+ * features based on id
+ * @lhs server pointer
+ * @return Handler function for router
+ */
 func (s *Server) featureHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
