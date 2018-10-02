@@ -1,8 +1,9 @@
 module Page.FeatureList exposing (Model, Msg, init, update, view)
 
 import Browser
-import Html exposing (Html, h1, table, td, text, th, thead, tr)
+import Html exposing (Html, button, h1, table, td, text, th, thead, tr)
 import Html.Attributes exposing (style)
+import Html.Events exposing (onClick)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 import Skeleton
@@ -20,7 +21,7 @@ type alias Feature =
 
 
 type alias Model =
-    { features : List Feature }
+    { features : List (Maybe Feature) }
 
 
 
@@ -37,7 +38,9 @@ init =
 
 
 type Msg
-    = RetrieveFeatures (Result Http.Error (List Feature))
+    = RetrieveFeatures (Result Http.Error (List (Maybe Feature)))
+    | DeletePressed Int
+    | DeleteFeature (Result Http.Error ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -53,12 +56,25 @@ update msg model =
                         "Failed to retrieve features"
                         ( model, Cmd.none )
 
+        DeletePressed id ->
+            ( model, deleteFeature id )
+
+        DeleteFeature result ->
+            case result of
+                Ok _ ->
+                    ( model, retrieveFeatures )
+
+                Err _ ->
+                    Debug.log
+                        "Failed to delete feature"
+                        ( model, Cmd.none )
+
 
 
 -- View
 
 
-view : Model -> Skeleton.Details msg
+view : Model -> Skeleton.Details Msg
 view model =
     { title = "Feature List"
     , body =
@@ -69,6 +85,7 @@ view model =
                     [ th [] [ text "ID" ]
                     , th [] [ text "Name" ]
                     , th [] [ text "Description" ]
+                    , th [] [ text "Control" ]
                     ]
                 ]
                 (List.map featureRow model.features)
@@ -77,15 +94,25 @@ view model =
     }
 
 
-featureRow : Feature -> Html msg
-featureRow feat =
-    tr []
-        [ td []
-            [ text (String.fromInt feat.id) ]
-        , td []
-            [ text feat.name ]
-        , td [] [ text feat.description ]
-        ]
+featureRow : Maybe Feature -> Html Msg
+featureRow maybeFeat =
+    case maybeFeat of
+        Just feat ->
+            tr []
+                [ td []
+                    [ text (String.fromInt feat.id) ]
+                , td []
+                    [ text feat.name ]
+                , td [] [ text feat.description ]
+                , td []
+                    [ button
+                        [ onClick (DeletePressed feat.id) ]
+                        [ text "Delete" ]
+                    ]
+                ]
+
+        Nothing ->
+            text ""
 
 
 
@@ -100,11 +127,27 @@ featureDecoder =
         (field "description" string)
 
 
-featureListDecoder : Decoder (List Feature)
+featureListDecoder : Decoder (List (Maybe Feature))
 featureListDecoder =
-    Decode.list featureDecoder
+    Decode.list (Decode.nullable featureDecoder)
 
 
 retrieveFeatures : Cmd Msg
 retrieveFeatures =
     Http.send RetrieveFeatures (Http.get "/api/feature" featureListDecoder)
+
+
+deleteFeature : Int -> Cmd Msg
+deleteFeature id =
+    Http.send
+        DeleteFeature
+        (Http.request
+            { body = Http.emptyBody
+            , headers = []
+            , expect = Http.expectStringResponse (\_ -> Ok ())
+            , timeout = Nothing
+            , withCredentials = False
+            , method = "DELETE"
+            , url = "/api/feature/" ++ String.fromInt id
+            }
+        )

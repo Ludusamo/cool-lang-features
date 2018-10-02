@@ -5135,7 +5135,19 @@ var author$project$Page$FeatureList$featureDecoder = A4(
 	A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
 	A2(elm$json$Json$Decode$field, 'description', elm$json$Json$Decode$string));
 var elm$json$Json$Decode$list = _Json_decodeList;
-var author$project$Page$FeatureList$featureListDecoder = elm$json$Json$Decode$list(author$project$Page$FeatureList$featureDecoder);
+var elm$json$Json$Decode$map = _Json_map1;
+var elm$json$Json$Decode$null = _Json_decodeNull;
+var elm$json$Json$Decode$oneOf = _Json_oneOf;
+var elm$json$Json$Decode$nullable = function (decoder) {
+	return elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				elm$json$Json$Decode$null(elm$core$Maybe$Nothing),
+				A2(elm$json$Json$Decode$map, elm$core$Maybe$Just, decoder)
+			]));
+};
+var author$project$Page$FeatureList$featureListDecoder = elm$json$Json$Decode$list(
+	elm$json$Json$Decode$nullable(author$project$Page$FeatureList$featureDecoder));
 var elm$http$Http$Internal$EmptyBody = {$: 'EmptyBody'};
 var elm$http$Http$emptyBody = elm$http$Http$Internal$EmptyBody;
 var elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
@@ -6030,22 +6042,61 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (_n0) {
 	return elm$core$Platform$Sub$none;
 };
+var author$project$Page$FeatureList$DeleteFeature = function (a) {
+	return {$: 'DeleteFeature', a: a};
+};
+var author$project$Page$FeatureList$deleteFeature = function (id) {
+	return A2(
+		elm$http$Http$send,
+		author$project$Page$FeatureList$DeleteFeature,
+		elm$http$Http$request(
+			{
+				body: elm$http$Http$emptyBody,
+				expect: elm$http$Http$expectStringResponse(
+					function (_n0) {
+						return elm$core$Result$Ok(_Utils_Tuple0);
+					}),
+				headers: _List_Nil,
+				method: 'DELETE',
+				timeout: elm$core$Maybe$Nothing,
+				url: '/api/feature/' + elm$core$String$fromInt(id),
+				withCredentials: false
+			}));
+};
 var elm$core$Debug$log = _Debug_log;
 var author$project$Page$FeatureList$update = F2(
 	function (msg, model) {
-		var result = msg.a;
-		if (result.$ === 'Ok') {
-			var features = result.a;
-			return _Utils_Tuple2(
-				_Utils_update(
+		switch (msg.$) {
+			case 'RetrieveFeatures':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var features = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{features: features}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return A2(
+						elm$core$Debug$log,
+						'Failed to retrieve features',
+						_Utils_Tuple2(model, elm$core$Platform$Cmd$none));
+				}
+			case 'DeletePressed':
+				var id = msg.a;
+				return _Utils_Tuple2(
 					model,
-					{features: features}),
-				elm$core$Platform$Cmd$none);
-		} else {
-			return A2(
-				elm$core$Debug$log,
-				'Failed to retrieve features',
-				_Utils_Tuple2(model, elm$core$Platform$Cmd$none));
+					author$project$Page$FeatureList$deleteFeature(id));
+			default:
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					return _Utils_Tuple2(model, author$project$Page$FeatureList$retrieveFeatures);
+				} else {
+					return A2(
+						elm$core$Debug$log,
+						'Failed to delete feature',
+						_Utils_Tuple2(model, elm$core$Platform$Cmd$none));
+				}
 		}
 	});
 var elm$browser$Browser$External = function (a) {
@@ -6072,7 +6123,6 @@ var elm$core$Task$perform = F2(
 			elm$core$Task$Perform(
 				A2(elm$core$Task$map, toMessage, task)));
 	});
-var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
 var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
@@ -6300,39 +6350,82 @@ var author$project$Main$update = F2(
 				return A2(author$project$Main$selectRoute, url, model);
 		}
 	});
+var author$project$Page$FeatureList$DeletePressed = function (a) {
+	return {$: 'DeletePressed', a: a};
+};
+var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$td = _VirtualDom_node('td');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$html$Html$tr = _VirtualDom_node('tr');
-var author$project$Page$FeatureList$featureRow = function (feat) {
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
 	return A2(
-		elm$html$Html$tr,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$td,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						elm$core$String$fromInt(feat.id))
-					])),
-				A2(
-				elm$html$Html$td,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(feat.name)
-					])),
-				A2(
-				elm$html$Html$td,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(feat.description)
-					]))
-			]));
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
+var author$project$Page$FeatureList$featureRow = function (maybeFeat) {
+	if (maybeFeat.$ === 'Just') {
+		var feat = maybeFeat.a;
+		return A2(
+			elm$html$Html$tr,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$td,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(
+							elm$core$String$fromInt(feat.id))
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(feat.name)
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(feat.description)
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_Nil,
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$button,
+							_List_fromArray(
+								[
+									elm$html$Html$Events$onClick(
+									author$project$Page$FeatureList$DeletePressed(feat.id))
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text('Delete')
+								]))
+						]))
+				]));
+	} else {
+		return elm$html$Html$text('');
+	}
 };
 var elm$html$Html$h1 = _VirtualDom_node('h1');
 var elm$html$Html$table = _VirtualDom_node('table');
@@ -6341,7 +6434,6 @@ var elm$html$Html$thead = _VirtualDom_node('thead');
 var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
 var author$project$Page$FeatureList$view = function (model) {
-	var borderStyle = A2(elm$html$Html$Attributes$style, 'border', '1px solid black');
 	return {
 		body: _List_fromArray(
 			[
@@ -6355,7 +6447,9 @@ var author$project$Page$FeatureList$view = function (model) {
 				A2(
 				elm$html$Html$table,
 				_List_fromArray(
-					[borderStyle]),
+					[
+						A2(elm$html$Html$Attributes$style, 'border', '1px solid black')
+					]),
 				A2(
 					elm$core$List$append,
 					_List_fromArray(
@@ -6385,6 +6479,13 @@ var author$project$Page$FeatureList$view = function (model) {
 									_List_fromArray(
 										[
 											elm$html$Html$text('Description')
+										])),
+									A2(
+									elm$html$Html$th,
+									_List_Nil,
+									_List_fromArray(
+										[
+											elm$html$Html$text('Control')
 										]))
 								]))
 						]),
