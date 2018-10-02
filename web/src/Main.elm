@@ -4,6 +4,7 @@ import Browser
 import Browser.Navigation as Nav
 import Html exposing (Html, div)
 import Http
+import Page.FeatureList as FeatureList
 import Page.NotFound as NotFound
 import Url
 import Url.Parser exposing ((</>), Parser, int, map, oneOf, parse, s, top)
@@ -22,7 +23,7 @@ main =
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
-    ( Model MainPage [] key, Cmd.none )
+    ( Model (FeatureList (FeatureList.Model [])) key, Cmd.none )
 
 
 
@@ -31,15 +32,7 @@ init _ url key =
 
 type alias Model =
     { page : Route
-    , features : List Feature
     , key : Nav.Key
-    }
-
-
-type alias Feature =
-    { id : String
-    , name : String
-    , description : String
     }
 
 
@@ -48,9 +41,9 @@ type alias Feature =
 
 
 type Msg
-    = LoadingFeatures (Result Http.Error (List Feature))
-    | LinkClicked Browser.UrlRequest
+    = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
+    | FeatureListMsg FeatureList.Msg
     | NoOp
 
 
@@ -60,35 +53,8 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        LoadingFeatures (Ok features) ->
-            ( { model | features = features }, Cmd.none )
-
-        LoadingFeatures (Err err) ->
-            case err of
-                Http.BadUrl errorMsg ->
-                    Debug.log
-                        errorMsg
-                        ( model, Cmd.none )
-
-                Http.Timeout ->
-                    Debug.log
-                        "Timeout"
-                        ( model, Cmd.none )
-
-                Http.NetworkError ->
-                    Debug.log
-                        "NetworkError"
-                        ( model, Cmd.none )
-
-                Http.BadStatus status ->
-                    Debug.log
-                        status.body
-                        ( model, Cmd.none )
-
-                Http.BadPayload status res ->
-                    Debug.log
-                        status
-                        ( model, Cmd.none )
+        FeatureListMsg _ ->
+            ( model, Cmd.none )
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -125,8 +91,8 @@ view model =
         NotFound ->
             NotFound.view never
 
-        MainPage ->
-            NotFound.view never
+        FeatureList featurelistModel ->
+            FeatureList.view FeatureListMsg featurelistModel
 
         AddFeature ->
             NotFound.view never
@@ -140,7 +106,7 @@ view model =
 
 
 type Route
-    = MainPage
+    = FeatureList FeatureList.Model
     | AddFeature
     | EditFeature Int
     | NotFound
@@ -149,7 +115,7 @@ type Route
 routeParser : Parser (Route -> a) a
 routeParser =
     oneOf
-        [ map MainPage top
+        [ map (FeatureList (FeatureList.Model [])) top
         , map AddFeature (s "add")
         , map EditFeature (s "edit" </> int)
         ]
