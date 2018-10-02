@@ -1,6 +1,7 @@
 module Page.FeatureList exposing (Feature, Model, Msg, featureDecoder, init, update, view)
 
 import Browser
+import Browser.Navigation as Nav
 import Html exposing (Html, a, button, h1, table, td, text, th, thead, tr)
 import Html.Attributes exposing (href, style)
 import Html.Events exposing (onClick)
@@ -41,6 +42,7 @@ type Msg
     = RetrieveFeatures (Result Http.Error (List (Maybe Feature)))
     | DeletePressed Int
     | DeleteFeature (Result Http.Error ())
+    | ModifyPressed Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -68,6 +70,9 @@ update msg model =
                     Debug.log
                         "Failed to delete feature"
                         ( model, Cmd.none )
+
+        ModifyPressed id ->
+            ( model, Nav.load ("/modify/" ++ String.fromInt id) )
 
 
 
@@ -109,6 +114,9 @@ featureRow maybeFeat =
                     [ button
                         [ onClick (DeletePressed feat.id) ]
                         [ text "Delete" ]
+                    , button
+                        [ onClick (ModifyPressed feat.id) ]
+                        [ text "Modify" ]
                     ]
                 ]
 

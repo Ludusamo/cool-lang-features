@@ -6547,7 +6547,7 @@ var author$project$Page$FeatureList$update = F2(
 				return _Utils_Tuple2(
 					model,
 					author$project$Page$FeatureList$deleteFeature(id));
-			default:
+			case 'DeleteFeature':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
 					return _Utils_Tuple2(model, author$project$Page$FeatureList$retrieveFeatures);
@@ -6557,6 +6557,12 @@ var author$project$Page$FeatureList$update = F2(
 						'Failed to delete feature',
 						_Utils_Tuple2(model, elm$core$Platform$Cmd$none));
 				}
+			default:
+				var id = msg.a;
+				return _Utils_Tuple2(
+					model,
+					elm$browser$Browser$Navigation$load(
+						'/modify/' + elm$core$String$fromInt(id)));
 		}
 	});
 var author$project$Page$ModifyFeature$ModifyFeature = function (a) {
@@ -6902,6 +6908,9 @@ var author$project$Page$AddFeature$view = function (model) {
 var author$project$Page$FeatureList$DeletePressed = function (a) {
 	return {$: 'DeletePressed', a: a};
 };
+var author$project$Page$FeatureList$ModifyPressed = function (a) {
+	return {$: 'ModifyPressed', a: a};
+};
 var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$tr = _VirtualDom_node('tr');
@@ -6950,6 +6959,17 @@ var author$project$Page$FeatureList$featureRow = function (maybeFeat) {
 							_List_fromArray(
 								[
 									elm$html$Html$text('Delete')
+								])),
+							A2(
+							elm$html$Html$button,
+							_List_fromArray(
+								[
+									elm$html$Html$Events$onClick(
+									author$project$Page$FeatureList$ModifyPressed(feat.id))
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text('Modify')
 								]))
 						]))
 				]));
