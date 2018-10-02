@@ -5017,6 +5017,24 @@ var author$project$Main$featureList = F2(
 				}),
 			A2(elm$core$Platform$Cmd$map, author$project$Main$FeatureListMsg, cmds));
 	});
+var author$project$Main$ModifyFeatureMsg = function (a) {
+	return {$: 'ModifyFeatureMsg', a: a};
+};
+var author$project$Main$ModifyFeaturePage = function (a) {
+	return {$: 'ModifyFeaturePage', a: a};
+};
+var author$project$Main$modifyFeature = F2(
+	function (model, _n0) {
+		var modifyModel = _n0.a;
+		var cmds = _n0.b;
+		return _Utils_Tuple2(
+			_Utils_update(
+				model,
+				{
+					page: author$project$Main$ModifyFeaturePage(modifyModel)
+				}),
+			A2(elm$core$Platform$Cmd$map, author$project$Main$ModifyFeatureMsg, cmds));
+	});
 var elm$core$Basics$identity = function (x) {
 	return x;
 };
@@ -5880,6 +5898,62 @@ var author$project$Page$FeatureList$retrieveFeatures = A2(
 var author$project$Page$FeatureList$init = _Utils_Tuple2(
 	author$project$Page$FeatureList$Model(_List_Nil),
 	author$project$Page$FeatureList$retrieveFeatures);
+var author$project$Page$ModifyFeature$Model = F4(
+	function (id, name, description, errorMsg) {
+		return {description: description, errorMsg: errorMsg, id: id, name: name};
+	});
+var author$project$Page$ModifyFeature$ReceiveFeature = function (a) {
+	return {$: 'ReceiveFeature', a: a};
+};
+var author$project$Page$ModifyFeature$retrieveFeature = function (id) {
+	return A2(
+		elm$http$Http$send,
+		author$project$Page$ModifyFeature$ReceiveFeature,
+		A2(
+			elm$http$Http$get,
+			'/api/feature/' + elm$core$String$fromInt(id),
+			author$project$Page$FeatureList$featureDecoder));
+};
+var author$project$Page$ModifyFeature$init = function (id) {
+	return _Utils_Tuple2(
+		A4(author$project$Page$ModifyFeature$Model, id, '', '', ''),
+		author$project$Page$ModifyFeature$retrieveFeature(id));
+};
+var elm$core$String$toInt = _String_toInt;
+var elm$url$Url$Parser$custom = F2(
+	function (tipe, stringToSomething) {
+		return elm$url$Url$Parser$Parser(
+			function (_n0) {
+				var visited = _n0.visited;
+				var unvisited = _n0.unvisited;
+				var params = _n0.params;
+				var frag = _n0.frag;
+				var value = _n0.value;
+				if (!unvisited.b) {
+					return _List_Nil;
+				} else {
+					var next = unvisited.a;
+					var rest = unvisited.b;
+					var _n2 = stringToSomething(next);
+					if (_n2.$ === 'Just') {
+						var nextValue = _n2.a;
+						return _List_fromArray(
+							[
+								A5(
+								elm$url$Url$Parser$State,
+								A2(elm$core$List$cons, next, visited),
+								rest,
+								params,
+								frag,
+								value(nextValue))
+							]);
+					} else {
+						return _List_Nil;
+					}
+				}
+			});
+	});
+var elm$url$Url$Parser$int = A2(elm$url$Url$Parser$custom, 'NUMBER', elm$core$String$toInt);
 var elm$core$List$append = F2(
 	function (xs, ys) {
 		if (!ys.b) {
@@ -5934,6 +6008,18 @@ var elm$url$Url$Parser$s = function (str) {
 			}
 		});
 };
+var elm$url$Url$Parser$slash = F2(
+	function (_n0, _n1) {
+		var parseBefore = _n0.a;
+		var parseAfter = _n1.a;
+		return elm$url$Url$Parser$Parser(
+			function (state) {
+				return A2(
+					elm$core$List$concatMap,
+					parseAfter,
+					parseBefore(state));
+			});
+	});
 var elm$url$Url$Parser$top = elm$url$Url$Parser$Parser(
 	function (state) {
 		return _List_fromArray(
@@ -5950,7 +6036,19 @@ var author$project$Main$routeParser = function (model) {
 				A2(
 				author$project$Main$route,
 				elm$url$Url$Parser$s('add'),
-				A2(author$project$Main$addFeature, model, author$project$Page$AddFeature$init))
+				A2(author$project$Main$addFeature, model, author$project$Page$AddFeature$init)),
+				A2(
+				author$project$Main$route,
+				A2(
+					elm$url$Url$Parser$slash,
+					elm$url$Url$Parser$s('modify'),
+					elm$url$Url$Parser$int),
+				function (id) {
+					return A2(
+						author$project$Main$modifyFeature,
+						model,
+						author$project$Page$ModifyFeature$init(id));
+				})
 			]));
 };
 var elm$url$Url$Parser$getFirstMatch = function (states) {
@@ -6217,7 +6315,6 @@ var elm$core$String$left = F2(
 		return (n < 1) ? '' : A3(elm$core$String$slice, 0, n, string);
 	});
 var elm$core$String$contains = _String_contains;
-var elm$core$String$toInt = _String_toInt;
 var elm$url$Url$Url = F6(
 	function (protocol, host, port_, path, query, fragment) {
 		return {fragment: fragment, host: host, path: path, port_: port_, protocol: protocol, query: query};
@@ -6462,6 +6559,113 @@ var author$project$Page$FeatureList$update = F2(
 				}
 		}
 	});
+var author$project$Page$ModifyFeature$ModifyFeature = function (a) {
+	return {$: 'ModifyFeature', a: a};
+};
+var elm$json$Json$Encode$int = _Json_wrap;
+var author$project$Page$ModifyFeature$modifyFeature = function (model) {
+	return A2(
+		elm$http$Http$send,
+		author$project$Page$ModifyFeature$ModifyFeature,
+		elm$http$Http$request(
+			{
+				body: elm$http$Http$jsonBody(
+					elm$json$Json$Encode$object(
+						_List_fromArray(
+							[
+								_Utils_Tuple2(
+								'id',
+								elm$json$Json$Encode$int(model.id)),
+								_Utils_Tuple2(
+								'name',
+								elm$json$Json$Encode$string(model.name)),
+								_Utils_Tuple2(
+								'description',
+								elm$json$Json$Encode$string(model.description))
+							]))),
+				expect: elm$http$Http$expectJson(author$project$Page$FeatureList$featureDecoder),
+				headers: _List_Nil,
+				method: 'PATCH',
+				timeout: elm$core$Maybe$Nothing,
+				url: '/api/feature/' + elm$core$String$fromInt(model.id),
+				withCredentials: false
+			}));
+};
+var author$project$Page$ModifyFeature$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'Name':
+				var name = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{name: name}),
+					elm$core$Platform$Cmd$none);
+			case 'Description':
+				var description = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{description: description}),
+					elm$core$Platform$Cmd$none);
+			case 'ClickSubmit':
+				return _Utils_Tuple2(
+					model,
+					author$project$Page$ModifyFeature$modifyFeature(model));
+			case 'ModifyFeature':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					return _Utils_Tuple2(
+						model,
+						elm$browser$Browser$Navigation$load(
+							A2(
+								elm$url$Url$Builder$relative,
+								_List_fromArray(
+									['/']),
+								_List_Nil)));
+				} else {
+					var err = result.a;
+					switch (err.$) {
+						case 'BadStatus':
+							var res = err.a;
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{errorMsg: res.status.message}),
+								elm$core$Platform$Cmd$none);
+						case 'BadPayload':
+							var res = err.a;
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{errorMsg: res}),
+								elm$core$Platform$Cmd$none);
+						default:
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{errorMsg: 'Failed to add'}),
+								elm$core$Platform$Cmd$none);
+					}
+				}
+			default:
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var feat = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{description: feat.description, name: feat.name}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{errorMsg: 'Failed to get feature'}),
+						elm$core$Platform$Cmd$none);
+				}
+		}
+	});
 var elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
 var elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
@@ -6533,6 +6737,18 @@ var author$project$Main$update = F2(
 						author$project$Main$addFeature,
 						model,
 						A2(author$project$Page$AddFeature$update, message, pageModel));
+				} else {
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
+			case 'ModifyFeatureMsg':
+				var message = msg.a;
+				var _n3 = model.page;
+				if (_n3.$ === 'ModifyFeaturePage') {
+					var pageModel = _n3.a;
+					return A2(
+						author$project$Main$modifyFeature,
+						model,
+						A2(author$project$Page$ModifyFeature$update, message, pageModel));
 				} else {
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
@@ -6822,6 +7038,87 @@ var author$project$Page$FeatureList$view = function (model) {
 		title: 'Feature List'
 	};
 };
+var author$project$Page$ModifyFeature$ClickSubmit = {$: 'ClickSubmit'};
+var author$project$Page$ModifyFeature$Description = function (a) {
+	return {$: 'Description', a: a};
+};
+var author$project$Page$ModifyFeature$Name = function (a) {
+	return {$: 'Name', a: a};
+};
+var elm$json$Json$Encode$bool = _Json_wrap;
+var elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$bool(bool));
+	});
+var elm$html$Html$Attributes$disabled = elm$html$Html$Attributes$boolProperty('disabled');
+var author$project$Page$ModifyFeature$view = function (model) {
+	return {
+		body: _List_fromArray(
+			[
+				A2(
+				elm$html$Html$h1,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text('Add Feature')
+					])),
+				A2(
+				elm$html$Html$input,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$type_('text'),
+						elm$html$Html$Attributes$placeholder('id'),
+						elm$html$Html$Attributes$value(
+						elm$core$String$fromInt(model.id)),
+						elm$html$Html$Attributes$disabled(true)
+					]),
+				_List_Nil),
+				A2(
+				elm$html$Html$input,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$type_('text'),
+						elm$html$Html$Attributes$placeholder('Name'),
+						elm$html$Html$Attributes$value(model.name),
+						elm$html$Html$Events$onInput(author$project$Page$ModifyFeature$Name)
+					]),
+				_List_Nil),
+				A2(
+				elm$html$Html$input,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$type_('text'),
+						elm$html$Html$Attributes$placeholder('Description'),
+						elm$html$Html$Attributes$value(model.description),
+						elm$html$Html$Events$onInput(author$project$Page$ModifyFeature$Description)
+					]),
+				_List_Nil),
+				A2(
+				elm$html$Html$input,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$type_('button'),
+						elm$html$Html$Attributes$value('Submit'),
+						elm$html$Html$Events$onClick(author$project$Page$ModifyFeature$ClickSubmit)
+					]),
+				_List_Nil),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2(elm$html$Html$Attributes$style, 'color', 'red')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(model.errorMsg)
+					]))
+			]),
+		title: 'Edit Feature'
+	};
+};
 var author$project$Page$NotFound$view = function (toMsg) {
 	return {
 		body: _List_fromArray(
@@ -6864,7 +7161,11 @@ var author$project$Main$view = function (model) {
 				author$project$Main$AddFeatureMsg,
 				author$project$Page$AddFeature$view(addFeatureModel));
 		default:
-			return author$project$Page$NotFound$view(elm$core$Basics$never);
+			var modifyFeatureModel = _n0.a;
+			return A2(
+				author$project$Skeleton$view,
+				author$project$Main$ModifyFeatureMsg,
+				author$project$Page$ModifyFeature$view(modifyFeatureModel));
 	}
 };
 var elm$browser$Browser$application = _Browser_application;

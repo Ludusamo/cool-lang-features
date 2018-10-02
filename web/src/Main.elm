@@ -6,6 +6,7 @@ import Html exposing (Html, div)
 import Http
 import Page.AddFeature as AddFeature
 import Page.FeatureList as FeatureList
+import Page.ModifyFeature as ModifyFeature
 import Page.NotFound as NotFound
 import Skeleton
 import Url
@@ -47,6 +48,7 @@ type Msg
     | UrlChanged Url.Url
     | FeatureListMsg FeatureList.Msg
     | AddFeatureMsg AddFeature.Msg
+    | ModifyFeatureMsg ModifyFeature.Msg
     | NoOp
 
 
@@ -68,6 +70,14 @@ update msg model =
             case model.page of
                 AddFeaturePage pageModel ->
                     addFeature model (AddFeature.update message pageModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        ModifyFeatureMsg message ->
+            case model.page of
+                ModifyFeaturePage pageModel ->
+                    modifyFeature model (ModifyFeature.update message pageModel)
 
                 _ ->
                     ( model, Cmd.none )
@@ -113,8 +123,8 @@ view model =
         AddFeaturePage addFeatureModel ->
             Skeleton.view AddFeatureMsg (AddFeature.view addFeatureModel)
 
-        EditFeature _ ->
-            NotFound.view never
+        ModifyFeaturePage modifyFeatureModel ->
+            Skeleton.view ModifyFeatureMsg (ModifyFeature.view modifyFeatureModel)
 
 
 
@@ -124,7 +134,7 @@ view model =
 type Page
     = FeatureListPage FeatureList.Model
     | AddFeaturePage AddFeature.Model
-    | EditFeature Int
+    | ModifyFeaturePage ModifyFeature.Model
     | NotFound
 
 
@@ -133,6 +143,8 @@ routeParser model =
     oneOf
         [ route top (featureList model FeatureList.init)
         , route (s "add") (addFeature model AddFeature.init)
+        , route (s "modify" </> int)
+            (\id -> modifyFeature model (ModifyFeature.init id))
         ]
 
 
@@ -147,6 +159,13 @@ addFeature : Model -> ( AddFeature.Model, Cmd AddFeature.Msg ) -> ( Model, Cmd M
 addFeature model ( addModel, cmds ) =
     ( { model | page = AddFeaturePage addModel }
     , Cmd.map AddFeatureMsg cmds
+    )
+
+
+modifyFeature : Model -> ( ModifyFeature.Model, Cmd ModifyFeature.Msg ) -> ( Model, Cmd Msg )
+modifyFeature model ( modifyModel, cmds ) =
+    ( { model | page = ModifyFeaturePage modifyModel }
+    , Cmd.map ModifyFeatureMsg cmds
     )
 
 
