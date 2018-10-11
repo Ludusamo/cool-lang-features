@@ -21,6 +21,9 @@ type Server struct {
 	router *Router
 }
 
+/** Creates an empty router object
+ * @return pointer to created router
+ */
 func CreateRouter() *Router {
 	return &Router{make([]RegexHandlerMapping, 0)}
 }

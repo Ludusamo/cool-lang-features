@@ -8,6 +8,13 @@ import (
 	"strconv"
 )
 
+/** Implement serve http function for the router so it conforms to the Handler
+ * interface. Goes through all mappings and checks their regex expressions for
+ * a match on the url.
+ * @lhs router pointer
+ * @param w the response writer to write out the resulting output
+ * @param r the http request object
+ */
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, mapping := range router.routes {
 		match := mapping.regex.MatchString(r.URL.String())
@@ -19,6 +26,12 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
+/** Adds a route to the router's list of routes.
+ * Turns the regexString into a regular expression to be matched with later.
+ * @lhs router pointer
+ * @param regexStr regular expression string to match with
+ * @param handler associated HTTP handler
+ */
 func (router *Router) AddRoute(regexStr string, handler http.HandlerFunc) {
 	regex := regexp.MustCompile(regexStr)
 	router.routes = append(router.routes, RegexHandlerMapping{regex, handler})
