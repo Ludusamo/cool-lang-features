@@ -3,7 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/Ludusamo/cool-lang-features/database"
+	"cool-lang-features/database"
 	"github.com/gorilla/mux"
 	"net/http"
 	"net/http/httptest"

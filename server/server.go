@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/Ludusamo/cool-lang-features/database"
+	"cool-lang-features/database"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"

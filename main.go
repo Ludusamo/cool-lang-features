@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/Ludusamo/cool-lang-features/server"
+	"cool-lang-features/server"
 	"github.com/pborman/getopt"
 )
 
