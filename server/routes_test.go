@@ -2,8 +2,8 @@ package server
 
 import (
 	"bytes"
-	"encoding/json"
 	"cool-lang-features/database"
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
 	"net/http/httptest"
