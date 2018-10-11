@@ -2,21 +2,34 @@ package server
 
 import (
 	"cool-lang-features/database"
-	"github.com/gorilla/mux"
 	"net/http"
+	"regexp"
 	"strconv"
 )
 
+type RegexHandlerMapping struct {
+	regex   *regexp.Regexp
+	handler http.HandlerFunc
+}
+
+type Router struct {
+	routes []RegexHandlerMapping
+}
+
 type Server struct {
 	db     *database.Database
-	router *mux.Router
+	router *Router
+}
+
+func CreateRouter() *Router {
+	return &Router{make([]RegexHandlerMapping, 0)}
 }
 
 /** Creates an empty server object
  * @return pointer to created server
  */
 func CreateServer() *Server {
-	return &Server{database.CreateDatabase(), mux.NewRouter()}
+	return &Server{database.CreateDatabase(), CreateRouter()}
 }
 
 /** Adds dummy data to the database for so there are a few data points

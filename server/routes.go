@@ -2,23 +2,40 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 )
+
+func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	for _, mapping := range router.routes {
+		match := mapping.regex.MatchString(r.URL.String())
+		if match {
+			mapping.handler(w, r)
+			return
+		}
+	}
+	http.NotFound(w, r)
+}
+
+func (router *Router) AddRoute(regexStr string, handler http.HandlerFunc) {
+	regex := regexp.MustCompile(regexStr)
+	router.routes = append(router.routes, RegexHandlerMapping{regex, handler})
+}
 
 /** Registers handlers for all the different routes on the server
  * @lhs server pointer
  */
 func (s *Server) RegisterHandlers() {
-	s.router.HandleFunc("/api", s.apiHandler())
-	s.router.HandleFunc("/api/feature", s.featuresHandler())
-	s.router.HandleFunc("/api/feature/{id:[0-9]+}", s.featureHandler())
+	s.router.AddRoute("/api/feature/([0-9]+)", s.featureHandler())
+	s.router.AddRoute("/api/feature", s.featuresHandler())
+	s.router.AddRoute("/api", s.apiHandler())
 	// Needs to be placed last. These are evaluated in the order they are added
-	s.router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "web/index.html")
-	})
+	s.router.AddRoute("/?[A-Za-z\\s\\/+]",
+		func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "web/index.html")
+		})
 }
 
 /** Handler for the /api route
@@ -69,9 +86,9 @@ func (s *Server) featuresHandler() http.HandlerFunc {
  * @return Handler function for router
  */
 func (s *Server) featureHandler() http.HandlerFunc {
+	regex := regexp.MustCompile("/api/feature/([0-9]+)")
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		id, parseErr := strconv.Atoi(vars["id"])
+		id, parseErr := strconv.Atoi(regex.FindStringSubmatch(r.URL.String())[1])
 		if parseErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(parseErr)
