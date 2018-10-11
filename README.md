@@ -43,10 +43,6 @@ The front end code is a little more unclean than I would like it to be, but the 
 
 ### Additional Resources
 
-- https://github.com/gorilla/mux
-    - I used this library for HTTP routing in GoLang
-- https://github.com/pborman/getopt
-    - I used this library for handling command line options
 - http://elm-lang.org/
     - I used Elm to create the front end of this application. I am still pretty new to it so the code code be improved.
     - You should not have to do anything with it, I built the one html file that the Go server will be hosting.

@@ -96,7 +96,7 @@ view : Model -> Skeleton.Details Msg
 view model =
     { title = "Edit Feature"
     , body =
-        [ h1 [] [ text "Add Feature" ]
+        [ h1 [] [ text "Modify Feature" ]
         , input [ type_ "text", placeholder "id", value (String.fromInt model.id), disabled True ] []
         , input [ type_ "text", placeholder "Name", value model.name, onInput Name ] []
         , input [ type_ "text", placeholder "Description", value model.description, onInput Description ] []
