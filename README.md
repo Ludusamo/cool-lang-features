@@ -16,7 +16,6 @@ go run backend.go [--listen {port}]
 
 ### Testing
 
-The GoLang code has pretty good test coverage, so you can run the tests that I wrote or manually test it by spinning up the server.
 Currently the routes are as follows:
 - `/`: Serves the listing of all the features. From here you can navigate to delete, modify, or add new features
 - `/add`: Form to add a new feature
@@ -37,6 +36,8 @@ The above is what I wrote for part 1 and still relevant so I left it as is. The 
 I don't like how I ended up structuring the code base. I will probably refactor it in the near future. Particularly what I don't like is because both my frontend and my backend use **main** as their package, I can't do a `go build`.
 
 To properly do this, I would probably have to separate out everything even further from the current folder hierarchy that I have. For simplicity, I left it as is for now.
+
+I also didn't stay on top of my test cases as much as I would have liked, so I have omitted them this time.
 
 ### Additional Resources
 
