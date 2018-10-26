@@ -66,6 +66,9 @@ func (s *Server) HandleConnection(c net.Conn) {
 		if encodingError != nil {
 			log.Fatal(encodingError)
 		}
+	} else if rpcType == "DeleteFeature" {
+		s.db.DeleteFeature(int(rpcMsg["id"].(float64)))
+		encoder.Encode(rpc.RPCRes{nil, ""})
 	}
 }
 

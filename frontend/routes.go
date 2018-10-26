@@ -138,7 +138,7 @@ func (s *Server) featureHandler() http.HandlerFunc {
 				json.NewEncoder(w).Encode(feat)
 			}
 		case "DELETE":
-			s.db.DeleteFeature(id)
+			rpc.DeleteFeature(s.backend, id)
 			w.WriteHeader(http.StatusOK)
 		}
 	}
