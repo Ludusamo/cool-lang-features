@@ -32,14 +32,14 @@ func sendRPC(conn net.Conn, rpc interface{}) RPCRes {
 
 }
 
-type GetFeatureRPC struct {
+type GetFeaturesRPC struct {
 	RPCType string `json:"type"`
 }
 
 func GetFeatures(addrAndPort string) RPCRes {
 	conn := setupConnection(addrAndPort)
 	defer conn.Close()
-	return sendRPC(conn, GetFeatureRPC{"GetFeatures"})
+	return sendRPC(conn, GetFeaturesRPC{"GetFeatures"})
 }
 
 type PostFeatureRPC struct {
@@ -63,4 +63,28 @@ func DeleteFeature(addrAndPort string, id int) RPCRes {
 	conn := setupConnection(addrAndPort)
 	defer conn.Close()
 	return sendRPC(conn, DeleteFeatureRPC{"DeleteFeature", id})
+}
+
+type PatchFeatureRPC struct {
+	RPCType     string `json:"type"`
+	ID          int    `json:"id"`
+	Name        string
+	Description string
+}
+
+func PatchFeature(addrAndPort string, id int, name string, des string) RPCRes {
+	conn := setupConnection(addrAndPort)
+	defer conn.Close()
+	return sendRPC(conn, PatchFeatureRPC{"PatchFeature", id, name, des})
+}
+
+type GetFeatureRPC struct {
+	RPCType string `json:"type"`
+	ID      int    `json:"id"`
+}
+
+func GetFeature(addrAndPort string, id int) RPCRes {
+	conn := setupConnection(addrAndPort)
+	defer conn.Close()
+	return sendRPC(conn, GetFeatureRPC{"GetFeature", id})
 }

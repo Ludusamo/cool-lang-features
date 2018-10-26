@@ -69,6 +69,29 @@ func (s *Server) HandleConnection(c net.Conn) {
 	} else if rpcType == "DeleteFeature" {
 		s.db.DeleteFeature(int(rpcMsg["id"].(float64)))
 		encoder.Encode(rpc.RPCRes{nil, ""})
+	} else if rpcType == "PatchFeature" {
+		feat, err := s.db.ModifyFeature(
+			int(rpcMsg["id"].(float64)),
+			rpcMsg["Name"].(string),
+			rpcMsg["Description"].(string))
+		if err != nil {
+			encoder.Encode(rpc.RPCRes{nil, err.Error()})
+			return
+		}
+		encodingError := encoder.Encode(rpc.RPCRes{feat, ""})
+		if encodingError != nil {
+			log.Fatal(encodingError)
+		}
+	} else if rpcType == "GetFeature" {
+		feat, err := s.db.GetFeature(int(rpcMsg["id"].(float64)))
+		if err != nil {
+			encoder.Encode(rpc.RPCRes{nil, err.Error()})
+			return
+		}
+		encodingError := encoder.Encode(rpc.RPCRes{feat, ""})
+		if encodingError != nil {
+			log.Fatal(encodingError)
+		}
 	}
 }
 

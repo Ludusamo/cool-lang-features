@@ -115,12 +115,12 @@ func (s *Server) featureHandler() http.HandlerFunc {
 		}
 		switch r.Method {
 		case "GET":
-			feat, err := s.db.GetFeature(id)
-			if err != nil {
+			res := rpc.GetFeature(s.backend, id)
+			if res.Err != "" {
 				w.WriteHeader(http.StatusNotFound)
-				json.NewEncoder(w).Encode(err)
+				json.NewEncoder(w).Encode(res.Err)
 			} else {
-				json.NewEncoder(w).Encode(feat)
+				json.NewEncoder(w).Encode(res.Data)
 			}
 		case "PATCH":
 			var featurePatch struct {
@@ -128,14 +128,16 @@ func (s *Server) featureHandler() http.HandlerFunc {
 				Description string
 			}
 			json.NewDecoder(r.Body).Decode(&featurePatch)
-			feat, err := s.db.ModifyFeature(id,
+			res := rpc.PatchFeature(
+				s.backend,
+				id,
 				featurePatch.Name,
 				featurePatch.Description)
-			if err != nil {
+			if res.Err != "" {
 				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(err)
+				json.NewEncoder(w).Encode(res.Err)
 			} else {
-				json.NewEncoder(w).Encode(feat)
+				json.NewEncoder(w).Encode(res.Data)
 			}
 		case "DELETE":
 			rpc.DeleteFeature(s.backend, id)
