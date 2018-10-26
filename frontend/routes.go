@@ -4,7 +4,6 @@ import (
 	"cool-lang-features/rpc"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -74,9 +73,6 @@ func (s *Server) featuresHandler() http.HandlerFunc {
 		switch r.Method {
 		case "GET":
 			res := rpc.GetFeatures(s.backend)
-			if res.Err != "" {
-				log.Fatal(res.Err)
-			}
 			json.NewEncoder(w).Encode(res.Data)
 		case "POST":
 			var featurePost struct {

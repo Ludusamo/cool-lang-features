@@ -13,10 +13,17 @@ type Server struct {
 	db *database.Database
 }
 
+/** Creates an empty server object
+ * @return pointer to created server
+ */
 func CreateServer() *Server {
 	return &Server{database.CreateDatabase()}
 }
 
+/** Spins up the service to listen to external tcp requests
+ * @lhs server pointer
+ * @param port integer port where the service will listen from
+ */
 func (s *Server) Start(port int) {
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
@@ -33,6 +40,10 @@ func (s *Server) Start(port int) {
 	}
 }
 
+/** Takes a connection, read an RPC, and processes it. Closes connection when
+ * finished
+ * @param c open connection
+ */
 func (s *Server) HandleConnection(c net.Conn) {
 	defer c.Close()
 	d := json.NewDecoder(c)
