@@ -6,8 +6,9 @@ import (
 	"net"
 )
 
-type GetFeatureRPC struct {
-	RPCType string `json:"type"`
+type RPCRes struct {
+	Data interface{}
+	Err  string
 }
 
 func setupConnection(addrAndPort string) net.Conn {
@@ -18,21 +19,37 @@ func setupConnection(addrAndPort string) net.Conn {
 	return conn
 }
 
-func sendRPC(conn net.Conn, rpc interface{}) interface{} {
+func sendRPC(conn net.Conn, rpc interface{}) RPCRes {
 	encoder := json.NewEncoder(conn)
 	err := encoder.Encode(rpc)
 	if err != nil {
 		log.Fatal(err)
 	}
 	decoder := json.NewDecoder(conn)
-	var res interface{}
+	var res RPCRes
 	decoder.Decode(&res)
 	return res
 
 }
 
-func GetFeatures(addrAndPort string) interface{} {
+type GetFeatureRPC struct {
+	RPCType string `json:"type"`
+}
+
+func GetFeatures(addrAndPort string) RPCRes {
 	conn := setupConnection(addrAndPort)
 	defer conn.Close()
 	return sendRPC(conn, GetFeatureRPC{"GetFeatures"})
+}
+
+type PostFeatureRPC struct {
+	RPCType     string `json:"type"`
+	Name        string
+	Description string
+}
+
+func PostFeature(addrAndPort string, name string, description string) RPCRes {
+	conn := setupConnection(addrAndPort)
+	defer conn.Close()
+	return sendRPC(conn, PostFeatureRPC{"PostFeature", name, description})
 }

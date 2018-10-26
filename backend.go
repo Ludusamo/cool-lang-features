@@ -11,7 +11,6 @@ func main() {
 	flag.Parse()
 	fmt.Println(*portFlag)
 	svr := backend.CreateServer()
-	//svr.RegisterHandlers()
 	svr.AddDummyData()
 	svr.Start(*portFlag)
 }
