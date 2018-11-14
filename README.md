@@ -5,29 +5,17 @@ Website for Parallel Processing Course creating a website.
 
 ## Getting Started
 
-### Building
-
-You can build the code by running the following from inside `cool-lang-features/`:
-```
-go build
-```
-
-This will create an executable in the same folder that you can run with the following command:
-```
-./cool-lang-features [--port {port}]
-```
-
 ### Running
 
-If you just wish to run the code, you can just run the following command from inside `cool-lang-features/`:
+You can run the code inside `cool-lang-features/`:
 
 ```
-go run main.go [--port {port}]
+go run frontend.go [--listen {port} --backend {backendAddress}]
+go run backend.go [--listen {port}]
 ```
 
 ### Testing
 
-The GoLang code has pretty good test coverage, so you can run the tests that I wrote or manually test it by spinning up the server.
 Currently the routes are as follows:
 - `/`: Serves the listing of all the features. From here you can navigate to delete, modify, or add new features
 - `/add`: Form to add a new feature
@@ -41,6 +29,16 @@ Currently the routes are as follows:
 
 The front end code is a little more unclean than I would like it to be, but the overall functionality is there. The web server, written in Go, is capable of doing add, delete, read, and modify on "features".
 
+#### Update for Part 2
+
+The above is what I wrote for part 1 and still relevant so I left it as is. The frontend can be spun up separately from the backend (see **Running**).
+
+I don't like how I ended up structuring the code base. I will probably refactor it in the near future. Particularly what I don't like is because both my frontend and my backend use **main** as their package, I can't do a `go build`.
+
+To properly do this, I would probably have to separate out everything even further from the current folder hierarchy that I have. For simplicity, I left it as is for now.
+
+I also didn't stay on top of my test cases as much as I would have liked, so I have omitted them this time.
+
 ### Additional Resources
 
 - http://elm-lang.org/
@@ -50,3 +48,7 @@ The front end code is a little more unclean than I would like it to be, but the 
 ### Additional Thoughts
 
 It took longer than I thought it would. I enjoy these kinds of projects though, and I thoroughly enjoyed it because I was using two languages I don't typically get to.
+
+#### Update for Part 2
+
+No additional insights.

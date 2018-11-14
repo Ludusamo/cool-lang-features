@@ -17,8 +17,9 @@ type Router struct {
 }
 
 type Server struct {
-	db     *database.Database
-	router *Router
+	db      *database.Database
+	router  *Router
+	backend string
 }
 
 /** Creates an empty router object
@@ -31,23 +32,17 @@ func CreateRouter() *Router {
 /** Creates an empty server object
  * @return pointer to created server
  */
-func CreateServer() *Server {
-	return &Server{database.CreateDatabase(), CreateRouter()}
-}
-
-/** Adds dummy data to the database for so there are a few data points
- * @lhs server pointer
- */
-func (s *Server) AddDummyData() {
-	s.db.AddFeature("Pattern Matching", "Pattern matching is a tool in "+
-		"programming languages to process data based on its structure.")
-	s.db.AddFeature("Reflection", "Reflection is a method by which a program "+
-		"can achieve metaprogramming capabilities.")
+func CreateServer(backendHostname string, backendPort int) *Server {
+	return &Server{database.CreateDatabase(),
+		CreateRouter(),
+		backendHostname + ":" + strconv.Itoa(backendPort)}
 }
 
 /** Spins up the service to listen to external http requests
  * @lhs server pointer
  * @param port integer port where the service will listen from
+ * @param backendHostname hostname of the backend
+ * @param backendPort port of the backend
  */
 func (s *Server) Start(port int) {
 	http.ListenAndServe(":"+strconv.Itoa(port), s.router)

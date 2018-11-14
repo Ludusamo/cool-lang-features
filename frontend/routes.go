@@ -1,6 +1,7 @@
 package server
 
 import (
+	"cool-lang-features/rpc"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -71,23 +72,24 @@ func (s *Server) featuresHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			features := s.db.GetFeatures()
-			json.NewEncoder(w).Encode(features)
+			res := rpc.GetFeatures(s.backend)
+			json.NewEncoder(w).Encode(res.Data)
 		case "POST":
 			var featurePost struct {
 				Name        string
 				Description string
 			}
 			json.NewDecoder(r.Body).Decode(&featurePost)
-			feat, err := s.db.AddFeature(
+			res := rpc.PostFeature(
+				s.backend,
 				featurePost.Name,
 				featurePost.Description)
-			if err != nil {
+			if res.Err != "" {
 				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(err)
+				json.NewEncoder(w).Encode(res.Err)
 			} else {
 				w.WriteHeader(http.StatusCreated)
-				json.NewEncoder(w).Encode(feat)
+				json.NewEncoder(w).Encode(res.Data)
 			}
 		}
 	}
@@ -109,12 +111,12 @@ func (s *Server) featureHandler() http.HandlerFunc {
 		}
 		switch r.Method {
 		case "GET":
-			feat, err := s.db.GetFeature(id)
-			if err != nil {
+			res := rpc.GetFeature(s.backend, id)
+			if res.Err != "" {
 				w.WriteHeader(http.StatusNotFound)
-				json.NewEncoder(w).Encode(err)
+				json.NewEncoder(w).Encode(res.Err)
 			} else {
-				json.NewEncoder(w).Encode(feat)
+				json.NewEncoder(w).Encode(res.Data)
 			}
 		case "PATCH":
 			var featurePatch struct {
@@ -122,17 +124,19 @@ func (s *Server) featureHandler() http.HandlerFunc {
 				Description string
 			}
 			json.NewDecoder(r.Body).Decode(&featurePatch)
-			feat, err := s.db.ModifyFeature(id,
+			res := rpc.PatchFeature(
+				s.backend,
+				id,
 				featurePatch.Name,
 				featurePatch.Description)
-			if err != nil {
+			if res.Err != "" {
 				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(err)
+				json.NewEncoder(w).Encode(res.Err)
 			} else {
-				json.NewEncoder(w).Encode(feat)
+				json.NewEncoder(w).Encode(res.Data)
 			}
 		case "DELETE":
-			s.db.DeleteFeature(id)
+			rpc.DeleteFeature(s.backend, id)
 			w.WriteHeader(http.StatusOK)
 		}
 	}
