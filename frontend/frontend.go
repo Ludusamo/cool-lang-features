@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cool-lang-features/frontend"
+	"cool-lang-features/frontend/server"
 	"flag"
 	"fmt"
 	"log"
