@@ -10,8 +10,8 @@ Website for Parallel Processing Course creating a website.
 You can run the code inside `cool-lang-features/`:
 
 ```
-go run frontend.go [--listen {port} --backend {backendAddress}]
-go run backend.go [--listen {port}]
+go run frontend/frontend.go [--listen {port} --backend {backendAddress}]
+go run frontend/backend.go [--listen {port}]
 ```
 
 ### Testing
