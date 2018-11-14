@@ -15,8 +15,6 @@ func (e *InternalError) Error() string {
 	return fmt.Sprintf("internal error: %s", e.reason)
 }
 
-type RPCMapping map[string]interface{}
-
 /** Helper function to check for fatal errors
  * @param err the error pointer to be checked
  */
@@ -51,7 +49,9 @@ func (s *Server) RegisterHandlers() {
  * @param encoder the encoder to write resposnes
  * @param rpcMsg rpc to be handled
  */
-func GetFeaturesHandler(s *Server, encoder *json.Encoder, rpcMsg RPCMapping) error {
+func GetFeaturesHandler(s *Server,
+	encoder *json.Encoder,
+	rpcMsg rpc.RPCMapping) error {
 	return tryEncode(encoder, rpc.RPCRes{s.db.GetFeatures(), ""})
 }
 
@@ -62,7 +62,7 @@ func GetFeaturesHandler(s *Server, encoder *json.Encoder, rpcMsg RPCMapping) err
  */
 func PostFeatureHandler(s *Server,
 	encoder *json.Encoder,
-	rpcMsg RPCMapping) error {
+	rpcMsg rpc.RPCMapping) error {
 	feat, err := s.db.AddFeature(
 		rpcMsg["Name"].(string),
 		rpcMsg["Description"].(string))
@@ -80,7 +80,7 @@ func PostFeatureHandler(s *Server,
  */
 func DeleteFeatureHandler(s *Server,
 	encoder *json.Encoder,
-	rpcMsg RPCMapping) error {
+	rpcMsg rpc.RPCMapping) error {
 	s.db.DeleteFeature(int(rpcMsg["id"].(float64)))
 	return tryEncode(encoder, rpc.RPCRes{nil, ""})
 }
@@ -92,7 +92,7 @@ func DeleteFeatureHandler(s *Server,
  */
 func PatchFeatureHandler(s *Server,
 	encoder *json.Encoder,
-	rpcMsg RPCMapping) error {
+	rpcMsg rpc.RPCMapping) error {
 	feat, err := s.db.ModifyFeature(
 		int(rpcMsg["id"].(float64)),
 		rpcMsg["Name"].(string),
@@ -111,7 +111,7 @@ func PatchFeatureHandler(s *Server,
  */
 func GetFeatureHandler(s *Server,
 	encoder *json.Encoder,
-	rpcMsg RPCMapping) error {
+	rpcMsg rpc.RPCMapping) error {
 	feat, err := s.db.GetFeature(int(rpcMsg["id"].(float64)))
 	if err != nil {
 		encoder.Encode(rpc.RPCRes{nil, err.Error()})

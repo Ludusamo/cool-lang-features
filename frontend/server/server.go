@@ -2,11 +2,15 @@ package server
 
 import (
 	"cool-lang-features/database"
+	"cool-lang-features/rpc"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 type RegexHandlerMapping struct {
@@ -23,6 +27,7 @@ type Server struct {
 	router            *Router
 	backend           string
 	backendConnection net.Conn
+	backendUp         bool
 }
 
 /** Creates an empty router object
@@ -37,14 +42,52 @@ func CreateRouter() *Router {
  */
 func CreateServer(backendHostname string, backendPort int) *Server {
 	backend := backendHostname + ":" + strconv.Itoa(backendPort)
-	conn, err := net.Dial("tcp", backend)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return &Server{database.CreateDatabase(),
+	server := &Server{database.CreateDatabase(),
 		CreateRouter(),
 		backend,
-		conn}
+		nil,
+		false}
+	server.connectToBackend()
+	go heartbeatMonitor(server)
+	return server
+}
+
+/** Attempts to connect the server to the specified backend server
+ * lhs server pointer
+ */
+func (s *Server) connectToBackend() {
+	conn, err := net.Dial("tcp", s.backend)
+	s.backendConnection = conn
+	s.backendUp = err == nil
+}
+
+/** Monitors heartbeat messages from the backend; if none is received, the
+ * backend is assumed to be down and the monitor will attempt to reconnect
+ * @param s server pointer
+ */
+func heartbeatMonitor(s *Server) {
+	for {
+		d := json.NewDecoder(s.backendConnection)
+		if !s.backendUp {
+			fmt.Printf("Detected failure on %s at %v\n", s.backend, time.Now())
+			s.connectToBackend()
+			continue
+		}
+
+		var rpcMsg rpc.RPCMapping
+		err := d.Decode(&rpcMsg)
+		if err != nil {
+			fmt.Println(err)
+			s.backendConnection.Close()
+			s.backendUp = false
+			continue
+		}
+		rpcType, exists := rpcMsg["type"]
+		if !exists || rpcType.(string) != "Heartbeat" {
+			log.Fatal("did not receive heartbeat")
+		}
+		fmt.Println("received heartbeat")
+	}
 }
 
 /** Spins up the service to listen to external http requests

@@ -6,6 +6,8 @@ import (
 	"net"
 )
 
+type RPCMapping map[string]interface{}
+
 type RPCRes struct {
 	Data interface{}
 	Err  string
@@ -25,6 +27,11 @@ func SendRPC(conn net.Conn, rpc interface{}) RPCRes {
 	var res RPCRes
 	decoder.Decode(&res)
 	return res
+}
+
+type HeartbeatRPC struct {
+	RPCType string `json:"type"`
+	SeqNum  int    `json:"seq"`
 }
 
 type GetFeaturesRPC struct {

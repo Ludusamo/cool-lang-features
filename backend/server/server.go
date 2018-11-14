@@ -2,16 +2,18 @@ package server
 
 import (
 	"cool-lang-features/database"
+	"cool-lang-features/rpc"
 	"encoding/json"
 	"log"
 	"net"
 	"strconv"
+	"time"
 )
 
 type Server struct {
 	db *database.Database
 	// Mapping of handlers that takes a server, a net connection, and an rpc
-	rpcHandlers    map[string]func(*Server, *json.Encoder, RPCMapping) error
+	rpcHandlers    map[string]func(*Server, *json.Encoder, rpc.RPCMapping) error
 	connectedUsers map[string]net.Conn
 }
 
@@ -21,7 +23,7 @@ type Server struct {
 func CreateServer() *Server {
 	return &Server{
 		database.CreateDatabase(),
-		make(map[string]func(*Server, *json.Encoder, RPCMapping) error),
+		make(map[string]func(*Server, *json.Encoder, rpc.RPCMapping) error),
 		make(map[string]net.Conn)}
 }
 
@@ -53,13 +55,21 @@ func (s *Server) HandleConnection(c net.Conn) {
 	log.Println(ip)
 	s.connectedUsers[ip] = c
 	d := json.NewDecoder(c)
+	go heartbeat(s, c)
 	for {
-		var rpcMsg RPCMapping
+		c.SetDeadline(time.Now().Add(time.Second * 90))
+		var rpcMsg rpc.RPCMapping
 		d.Decode(&rpcMsg)
+
+		// Checks to see if the heartbeat sender terminated the connection
+		_, stillAlive := s.connectedUsers[ip]
+		if !stillAlive {
+			break
+		}
 
 		rpcType, exists := rpcMsg["type"]
 		if !exists {
-			return
+			break
 		}
 		log.Println(rpcMsg)
 		encoder := json.NewEncoder(c)
@@ -68,14 +78,32 @@ func (s *Server) HandleConnection(c net.Conn) {
 		if err != nil {
 			switch err.(type) {
 			case *InternalError:
-				break
-			default:
 				log.Println(err)
+			default:
+				continue
 			}
 		}
 	}
-	log.Printf("removing %s\n", ip)
-	delete(s.connectedUsers, ip)
+}
+
+/** Sends frontend a heartbeat rpc to let them know that the server is up
+ * @param s server pointer
+ * @param c connection to send the heartbeat across
+ */
+func heartbeat(s *Server, c net.Conn) {
+	ip := c.RemoteAddr().String()
+	seq := 0
+	for {
+		encoder := json.NewEncoder(c)
+		err := encoder.Encode(rpc.HeartbeatRPC{"Heartbeat", seq})
+		if err != nil {
+			log.Printf("removing %s\n", ip)
+			delete(s.connectedUsers, ip)
+			return
+		}
+		seq += 1
+		time.Sleep(time.Second * 10)
+	}
 }
 
 /** Adds dummy data to the database for so there are a few data points
