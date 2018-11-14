@@ -12,5 +12,6 @@ func main() {
 	fmt.Println(*portFlag)
 	svr := server.CreateServer()
 	svr.AddDummyData()
+	svr.RegisterHandlers()
 	svr.Start(*portFlag)
 }

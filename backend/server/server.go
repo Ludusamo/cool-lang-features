@@ -2,7 +2,6 @@ package server
 
 import (
 	"cool-lang-features/database"
-	"cool-lang-features/rpc"
 	"encoding/json"
 	"log"
 	"net"
@@ -11,13 +10,17 @@ import (
 
 type Server struct {
 	db *database.Database
+	// Mapping of handlers that takes a server, a net connection, and an rpc
+	rpcHandlers map[string]func(*Server, *json.Encoder, RPCMapping)
 }
 
 /** Creates an empty server object
  * @return pointer to created server
  */
 func CreateServer() *Server {
-	return &Server{database.CreateDatabase()}
+	return &Server{
+		database.CreateDatabase(),
+		make(map[string]func(*Server, *json.Encoder, RPCMapping))}
 }
 
 /** Spins up the service to listen to external tcp requests
@@ -47,7 +50,7 @@ func (s *Server) Start(port int) {
 func (s *Server) HandleConnection(c net.Conn) {
 	defer c.Close()
 	d := json.NewDecoder(c)
-	var rpcMsg map[string]interface{}
+	var rpcMsg RPCMapping
 	err := d.Decode(&rpcMsg)
 	if err != nil {
 		log.Fatal(err)
@@ -60,50 +63,7 @@ func (s *Server) HandleConnection(c net.Conn) {
 	log.Println(rpcMsg)
 	encoder := json.NewEncoder(c)
 	// Handle RPC
-	if rpcType == "GetFeatures" {
-		err := encoder.Encode(rpc.RPCRes{s.db.GetFeatures(), ""})
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else if rpcType == "PostFeature" {
-		feat, err := s.db.AddFeature(
-			rpcMsg["Name"].(string),
-			rpcMsg["Description"].(string))
-		if err != nil {
-			encoder.Encode(rpc.RPCRes{nil, err.Error()})
-			return
-		}
-		encodingError := encoder.Encode(rpc.RPCRes{feat, ""})
-		if encodingError != nil {
-			log.Fatal(encodingError)
-		}
-	} else if rpcType == "DeleteFeature" {
-		s.db.DeleteFeature(int(rpcMsg["id"].(float64)))
-		encoder.Encode(rpc.RPCRes{nil, ""})
-	} else if rpcType == "PatchFeature" {
-		feat, err := s.db.ModifyFeature(
-			int(rpcMsg["id"].(float64)),
-			rpcMsg["Name"].(string),
-			rpcMsg["Description"].(string))
-		if err != nil {
-			encoder.Encode(rpc.RPCRes{nil, err.Error()})
-			return
-		}
-		encodingError := encoder.Encode(rpc.RPCRes{feat, ""})
-		if encodingError != nil {
-			log.Fatal(encodingError)
-		}
-	} else if rpcType == "GetFeature" {
-		feat, err := s.db.GetFeature(int(rpcMsg["id"].(float64)))
-		if err != nil {
-			encoder.Encode(rpc.RPCRes{nil, err.Error()})
-			return
-		}
-		encodingError := encoder.Encode(rpc.RPCRes{feat, ""})
-		if encodingError != nil {
-			log.Fatal(encodingError)
-		}
-	}
+	s.rpcHandlers[rpcType.(string)](s, encoder, rpcMsg)
 }
 
 /** Adds dummy data to the database for so there are a few data points
