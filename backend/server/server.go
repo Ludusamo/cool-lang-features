@@ -1,4 +1,4 @@
-package backend
+package server
 
 import (
 	"cool-lang-features/database"
