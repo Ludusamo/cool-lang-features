@@ -11,7 +11,8 @@ import (
 type Server struct {
 	db *database.Database
 	// Mapping of handlers that takes a server, a net connection, and an rpc
-	rpcHandlers map[string]func(*Server, *json.Encoder, RPCMapping)
+	rpcHandlers    map[string]func(*Server, *json.Encoder, RPCMapping) error
+	connectedUsers map[string]net.Conn
 }
 
 /** Creates an empty server object
@@ -20,7 +21,8 @@ type Server struct {
 func CreateServer() *Server {
 	return &Server{
 		database.CreateDatabase(),
-		make(map[string]func(*Server, *json.Encoder, RPCMapping))}
+		make(map[string]func(*Server, *json.Encoder, RPCMapping) error),
+		make(map[string]net.Conn)}
 }
 
 /** Spins up the service to listen to external tcp requests
@@ -34,12 +36,10 @@ func (s *Server) Start(port int) {
 	}
 	for {
 		conn, err := ln.Accept()
-		// Later on we can make this concurrent, but it can only handle one
-		// connection for the time being
 		if err != nil {
 			log.Fatal(err)
 		}
-		s.HandleConnection(conn)
+		go s.HandleConnection(conn)
 	}
 }
 
@@ -49,21 +49,33 @@ func (s *Server) Start(port int) {
  */
 func (s *Server) HandleConnection(c net.Conn) {
 	defer c.Close()
+	ip := c.RemoteAddr().String()
+	log.Println(ip)
+	s.connectedUsers[ip] = c
 	d := json.NewDecoder(c)
-	var rpcMsg RPCMapping
-	err := d.Decode(&rpcMsg)
-	if err != nil {
-		log.Fatal(err)
-	}
+	for {
+		var rpcMsg RPCMapping
+		d.Decode(&rpcMsg)
 
-	rpcType, exists := rpcMsg["type"]
-	if !exists {
-		return
+		rpcType, exists := rpcMsg["type"]
+		if !exists {
+			return
+		}
+		log.Println(rpcMsg)
+		encoder := json.NewEncoder(c)
+		// Handle RPC
+		err := s.rpcHandlers[rpcType.(string)](s, encoder, rpcMsg)
+		if err != nil {
+			switch err.(type) {
+			case *InternalError:
+				break
+			default:
+				log.Println(err)
+			}
+		}
 	}
-	log.Println(rpcMsg)
-	encoder := json.NewEncoder(c)
-	// Handle RPC
-	s.rpcHandlers[rpcType.(string)](s, encoder, rpcMsg)
+	log.Printf("removing %s\n", ip)
+	delete(s.connectedUsers, ip)
 }
 
 /** Adds dummy data to the database for so there are a few data points

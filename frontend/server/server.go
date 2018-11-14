@@ -2,6 +2,8 @@ package server
 
 import (
 	"cool-lang-features/database"
+	"log"
+	"net"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -17,9 +19,10 @@ type Router struct {
 }
 
 type Server struct {
-	db      *database.Database
-	router  *Router
-	backend string
+	db                *database.Database
+	router            *Router
+	backend           string
+	backendConnection net.Conn
 }
 
 /** Creates an empty router object
@@ -33,9 +36,15 @@ func CreateRouter() *Router {
  * @return pointer to created server
  */
 func CreateServer(backendHostname string, backendPort int) *Server {
+	backend := backendHostname + ":" + strconv.Itoa(backendPort)
+	conn, err := net.Dial("tcp", backend)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return &Server{database.CreateDatabase(),
 		CreateRouter(),
-		backendHostname + ":" + strconv.Itoa(backendPort)}
+		backend,
+		conn}
 }
 
 /** Spins up the service to listen to external http requests

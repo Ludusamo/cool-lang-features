@@ -72,7 +72,8 @@ func (s *Server) featuresHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			res := rpc.GetFeatures(s.backend)
+			res := rpc.SendRPC(s.backendConnection,
+				rpc.GetFeaturesRPC{"GetFeatures"})
 			json.NewEncoder(w).Encode(res.Data)
 		case "POST":
 			var featurePost struct {
@@ -80,10 +81,10 @@ func (s *Server) featuresHandler() http.HandlerFunc {
 				Description string
 			}
 			json.NewDecoder(r.Body).Decode(&featurePost)
-			res := rpc.PostFeature(
-				s.backend,
-				featurePost.Name,
-				featurePost.Description)
+			res := rpc.SendRPC(s.backendConnection,
+				rpc.PostFeatureRPC{"PostFeature",
+					featurePost.Name,
+					featurePost.Description})
 			if res.Err != "" {
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(res.Err)
@@ -111,7 +112,8 @@ func (s *Server) featureHandler() http.HandlerFunc {
 		}
 		switch r.Method {
 		case "GET":
-			res := rpc.GetFeature(s.backend, id)
+			res := rpc.SendRPC(s.backendConnection,
+				rpc.GetFeatureRPC{"GetFeature", id})
 			if res.Err != "" {
 				w.WriteHeader(http.StatusNotFound)
 				json.NewEncoder(w).Encode(res.Err)
@@ -124,11 +126,11 @@ func (s *Server) featureHandler() http.HandlerFunc {
 				Description string
 			}
 			json.NewDecoder(r.Body).Decode(&featurePatch)
-			res := rpc.PatchFeature(
-				s.backend,
-				id,
-				featurePatch.Name,
-				featurePatch.Description)
+			res := rpc.SendRPC(s.backendConnection,
+				rpc.PatchFeatureRPC{"PatchFeature",
+					id,
+					featurePatch.Name,
+					featurePatch.Description})
 			if res.Err != "" {
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(res.Err)
@@ -136,7 +138,8 @@ func (s *Server) featureHandler() http.HandlerFunc {
 				json.NewEncoder(w).Encode(res.Data)
 			}
 		case "DELETE":
-			rpc.DeleteFeature(s.backend, id)
+			rpc.SendRPC(s.backendConnection,
+				rpc.DeleteFeatureRPC{"DeleteFeature", id})
 			w.WriteHeader(http.StatusOK)
 		}
 	}
