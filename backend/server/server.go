@@ -57,7 +57,6 @@ func (s *Server) HandleConnection(c net.Conn) {
 	d := json.NewDecoder(c)
 	go heartbeat(s, c)
 	for {
-		c.SetDeadline(time.Now().Add(time.Second * 90))
 		var rpcMsg rpc.RPCMapping
 		d.Decode(&rpcMsg)
 
@@ -91,12 +90,13 @@ func (s *Server) HandleConnection(c net.Conn) {
  * @param c connection to send the heartbeat across
  */
 func heartbeat(s *Server, c net.Conn) {
-	ip := c.RemoteAddr().String()
 	seq := 0
 	for {
+		c.SetDeadline(time.Now().Add(time.Second * 20))
 		encoder := json.NewEncoder(c)
 		err := encoder.Encode(rpc.HeartbeatRPC{"Heartbeat", seq})
 		if err != nil {
+			ip := c.RemoteAddr().String()
 			log.Printf("removing %s\n", ip)
 			delete(s.connectedUsers, ip)
 			return

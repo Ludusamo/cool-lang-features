@@ -77,6 +77,7 @@ func heartbeatMonitor(s *Server) {
 		var rpcMsg rpc.RPCMapping
 		err := d.Decode(&rpcMsg)
 		if err != nil {
+			fmt.Println("encountered error")
 			fmt.Println(err)
 			s.backendConnection.Close()
 			s.backendUp = false
@@ -86,6 +87,7 @@ func heartbeatMonitor(s *Server) {
 		if !exists || rpcType.(string) != "Heartbeat" {
 			log.Fatal("did not receive heartbeat")
 		}
+
 		fmt.Println("received heartbeat")
 	}
 }
