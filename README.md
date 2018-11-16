@@ -11,7 +11,7 @@ You can run the code inside `cool-lang-features/`:
 
 ```
 go run frontend/frontend.go [--listen {port} --backend {backendAddress}]
-go run frontend/backend.go [--listen {port}]
+go run backend/backend.go [--listen {port}]
 ```
 
 ### Testing
@@ -22,6 +22,8 @@ Currently the routes are as follows:
 - `/modify/{id}`: Form to modify a feature identified by id
 - `/api/feature`: REST API defined here for GET and POST commands to retrieve all features or to add a new one
 - `/api/feature/{id}`: REST API defined her for GET, PATCH, and DELETE to retrieve, modify, or delete specific features based on id
+
+#### Vegeta Testing
 
 ## Other Notes
 

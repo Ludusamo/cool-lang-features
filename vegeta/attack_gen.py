@@ -11,7 +11,7 @@ idToName={}
 attackNum=0
 
 def genReadAllAttack():
-    return "GET http://localhost:8080/api/feature"
+    return "GET http://localhost:9998/api/feature"
 
 def selectRandomID():
     if len(registered) == len(removed): raise Exception('cannot perform attack')
@@ -22,7 +22,7 @@ def selectRandomID():
 
 def genReadSpecificAttack():
     ID=selectRandomID()
-    return "GET http://localhost:8080/api/feature/%d" % ID
+    return "GET http://localhost:9998/api/feature/%d" % ID
 
 def genWriteAttack():
     name=str(randint(0, 100000))
@@ -37,7 +37,7 @@ def genWriteAttack():
     data={"Name": name, "Description": description}
     with open('tmp/%d.json' % attackNum, 'w+') as jsonFile:
         json.dump(data, jsonFile)
-    return "POST http://localhost:8080/api/feature\n@tmp/%d.json" % attackNum
+    return "POST http://localhost:9998/api/feature\n@tmp/%d.json" % attackNum
 
 def genUpdateAttack():
     ID=selectRandomID()
@@ -45,14 +45,14 @@ def genUpdateAttack():
     data={"Name": idToName[ID], "Description": str(randint(0, 100000))}
     with open('tmp/%d.json' % attackNum, 'w+') as jsonFile:
         json.dump(data, jsonFile)
-    return "PATCH http://localhost:8080/api/feature/%d\n@tmp/%d.json" % (ID, attackNum)
+    return "PATCH http://localhost:9998/api/feature/%d\n@tmp/%d.json" % (ID, attackNum)
 
 def genDeleteAttack():
     ID=selectRandomID()
     removed.add(ID)
     del idToName[ID]
 
-    return "DELETE http://localhost:8080/api/feature/%d" % ID
+    return "DELETE http://localhost:9998/api/feature/%d" % ID
 
 attackGens=[genReadAllAttack, genReadSpecificAttack, genWriteAttack, genUpdateAttack, genDeleteAttack]
 
