@@ -29,6 +29,10 @@ func SendRPC(conn net.Conn, rpc interface{}) RPCRes {
 	return res
 }
 
+type HeartbeatSubRPC struct {
+	RPCType string `json:"type"`
+}
+
 type HeartbeatRPC struct {
 	RPCType string `json:"type"`
 	SeqNum  int    `json:"seq"`

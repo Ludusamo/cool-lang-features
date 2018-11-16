@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 )
 
 type InternalError struct {
@@ -28,7 +29,8 @@ func check(err error) {
  * @param encoder encoder to write the response to
  * @param res the rpc response object
  */
-func tryEncode(encoder *json.Encoder, res rpc.RPCRes) error {
+func tryEncode(c net.Conn, res rpc.RPCRes) error {
+	encoder := json.NewEncoder(c)
 	encodingError := encoder.Encode(res)
 	return encodingError
 }
@@ -37,11 +39,24 @@ func tryEncode(encoder *json.Encoder, res rpc.RPCRes) error {
  * @lhs server pointer
  */
 func (s *Server) RegisterHandlers() {
+	s.rpcHandlers["HeartbeatSub"] = HeartbeatSubHandler
 	s.rpcHandlers["GetFeatures"] = GetFeaturesHandler
 	s.rpcHandlers["PostFeature"] = PostFeatureHandler
 	s.rpcHandlers["DeleteFeature"] = DeleteFeatureHandler
 	s.rpcHandlers["PatchFeature"] = PatchFeatureHandler
 	s.rpcHandlers["GetFeature"] = GetFeatureHandler
+}
+
+/** Handler for heartbeat subscription request
+ * @param s server pointer
+ * @param encoder the encoder to write resposnes
+ * @param rpcMsg rpc to be handled
+ */
+func HeartbeatSubHandler(s *Server,
+	c net.Conn,
+	rpcMsg rpc.RPCMapping) error {
+	go Heartbeat(s, c)
+	return tryEncode(c, rpc.RPCRes{nil, ""})
 }
 
 /** Handler for getting features
@@ -50,9 +65,9 @@ func (s *Server) RegisterHandlers() {
  * @param rpcMsg rpc to be handled
  */
 func GetFeaturesHandler(s *Server,
-	encoder *json.Encoder,
+	c net.Conn,
 	rpcMsg rpc.RPCMapping) error {
-	return tryEncode(encoder, rpc.RPCRes{s.db.GetFeatures(), ""})
+	return tryEncode(c, rpc.RPCRes{s.db.GetFeatures(), ""})
 }
 
 /** Handler for posting a new feature
@@ -61,8 +76,9 @@ func GetFeaturesHandler(s *Server,
  * @param rpcMsg rpc to be handled
  */
 func PostFeatureHandler(s *Server,
-	encoder *json.Encoder,
+	c net.Conn,
 	rpcMsg rpc.RPCMapping) error {
+	encoder := json.NewEncoder(c)
 	feat, err := s.db.AddFeature(
 		rpcMsg["Name"].(string),
 		rpcMsg["Description"].(string))
@@ -70,7 +86,7 @@ func PostFeatureHandler(s *Server,
 		encoder.Encode(rpc.RPCRes{nil, err.Error()})
 		return &InternalError{"failed to add feature"}
 	}
-	return tryEncode(encoder, rpc.RPCRes{feat, ""})
+	return tryEncode(c, rpc.RPCRes{feat, ""})
 }
 
 /** Handler for deleting a feature
@@ -79,10 +95,10 @@ func PostFeatureHandler(s *Server,
  * @param rpcMsg rpc to be handled
  */
 func DeleteFeatureHandler(s *Server,
-	encoder *json.Encoder,
+	c net.Conn,
 	rpcMsg rpc.RPCMapping) error {
 	s.db.DeleteFeature(int(rpcMsg["id"].(float64)))
-	return tryEncode(encoder, rpc.RPCRes{nil, ""})
+	return tryEncode(c, rpc.RPCRes{nil, ""})
 }
 
 /** Handler for patching a feature
@@ -91,8 +107,9 @@ func DeleteFeatureHandler(s *Server,
  * @param rpcMsg rpc to be handled
  */
 func PatchFeatureHandler(s *Server,
-	encoder *json.Encoder,
+	c net.Conn,
 	rpcMsg rpc.RPCMapping) error {
+	encoder := json.NewEncoder(c)
 	feat, err := s.db.ModifyFeature(
 		int(rpcMsg["id"].(float64)),
 		rpcMsg["Name"].(string),
@@ -101,7 +118,7 @@ func PatchFeatureHandler(s *Server,
 		encoder.Encode(rpc.RPCRes{nil, err.Error()})
 		return &InternalError{"failed to modify feature"}
 	}
-	return tryEncode(encoder, rpc.RPCRes{feat, ""})
+	return tryEncode(c, rpc.RPCRes{feat, ""})
 }
 
 /** Handler for getting a particular feature
@@ -110,12 +127,13 @@ func PatchFeatureHandler(s *Server,
  * @param rpcMsg rpc to be handled
  */
 func GetFeatureHandler(s *Server,
-	encoder *json.Encoder,
+	c net.Conn,
 	rpcMsg rpc.RPCMapping) error {
+	encoder := json.NewEncoder(c)
 	feat, err := s.db.GetFeature(int(rpcMsg["id"].(float64)))
 	if err != nil {
 		encoder.Encode(rpc.RPCRes{nil, err.Error()})
 		return &InternalError{"failed to get feature"}
 	}
-	return tryEncode(encoder, rpc.RPCRes{feat, ""})
+	return tryEncode(c, rpc.RPCRes{feat, ""})
 }

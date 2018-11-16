@@ -10,12 +10,26 @@ type Feature struct {
 	Description string `json:"description"`
 }
 
+/** Calculates the bucket that an id is in
+ * @lhs database pointer
+ * @param id the id to find the bucket for
+ * @return the bucket number
+ */
+func (d *Database) calcBucket(id int) int {
+	bucketSize := len(d.features) / len(d.featureLocks)
+	return id / bucketSize
+}
+
 /** Adds an entry for a feature in the database
  * @param name string identifier for feature
  * @param desc text description of the feature
  * @return pointer to added feature, an error if it could not be added
  */
 func (d *Database) AddFeature(name string, desc string) (*Feature, error) {
+	for _, lock := range d.featureLocks {
+		lock.Lock()
+		defer lock.Unlock()
+	}
 	if _, exists := d.featureMap[name]; exists {
 		return nil, errors.New("feature already exists")
 	}
@@ -31,7 +45,13 @@ func (d *Database) AddFeature(name string, desc string) (*Feature, error) {
  * @return array of all features
  */
 func (d *Database) GetFeatures() []*Feature {
-	return d.features
+	for _, lock := range d.featureLocks {
+		lock.RLock()
+		defer lock.RUnlock()
+	}
+	cpy := make([]*Feature, len(d.features))
+	copy(cpy, d.features)
+	return cpy
 }
 
 /** Retrieve a specific feature from its identifier
@@ -39,6 +59,9 @@ func (d *Database) GetFeatures() []*Feature {
  * @return feature with the given identifier, error if it doesn't exist
  */
 func (d *Database) GetFeature(id int) (*Feature, error) {
+	lock := d.featureLocks[d.calcBucket(id)]
+	lock.RLock()
+	defer lock.RUnlock()
 	if id >= len(d.features) {
 		return nil, errors.New("feature does not exist")
 	}
@@ -53,6 +76,9 @@ func (d *Database) GetFeature(id int) (*Feature, error) {
  * @param id integer identifier of feature
  */
 func (d *Database) DeleteFeature(id int) {
+	lock := d.featureLocks[d.calcBucket(id)]
+	lock.Lock()
+	defer lock.Unlock()
 	if id >= len(d.features) {
 		return
 	}
@@ -71,6 +97,9 @@ func (d *Database) DeleteFeature(id int) {
  * @return modified feature, error if it doesn't exist
  */
 func (d *Database) ModifyFeature(id int, name string, desc string) (*Feature, error) {
+	lock := d.featureLocks[d.calcBucket(id)]
+	lock.Lock()
+	defer lock.Unlock()
 	if id >= len(d.features) {
 		return nil, errors.New("feature does not exist")
 	}

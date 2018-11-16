@@ -5,7 +5,6 @@ import (
 	"cool-lang-features/rpc"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"regexp"
@@ -23,11 +22,12 @@ type Router struct {
 }
 
 type Server struct {
-	db                *database.Database
-	router            *Router
-	backend           string
-	backendConnection net.Conn
-	backendUp         bool
+	db                  *database.Database
+	router              *Router
+	backend             string
+	backendConnection   net.Conn
+	heartbeatConnection net.Conn
+	backendUp           bool
 }
 
 /** Creates an empty router object
@@ -46,6 +46,7 @@ func CreateServer(backendHostname string, backendPort int) *Server {
 		CreateRouter(),
 		backend,
 		nil,
+		nil,
 		false}
 	server.connectToBackend()
 	go heartbeatMonitor(server)
@@ -61,31 +62,55 @@ func (s *Server) connectToBackend() {
 	s.backendUp = err == nil
 }
 
+func (s *Server) startHeartbeatMonitor() {
+	conn, err := net.Dial("tcp", s.backend)
+	s.heartbeatConnection = conn
+	s.backendUp = err == nil
+	if s.backendUp {
+		res := rpc.SendRPC(conn, rpc.HeartbeatSubRPC{"HeartbeatSub"})
+		for res.Err != "" {
+			res = rpc.SendRPC(conn, rpc.HeartbeatSubRPC{"HeartbeatSub"})
+		}
+	}
+}
+
 /** Monitors heartbeat messages from the backend; if none is received, the
  * backend is assumed to be down and the monitor will attempt to reconnect
  * @param s server pointer
  */
 func heartbeatMonitor(s *Server) {
+	s.startHeartbeatMonitor()
+	lastTimeReceived := time.Now()
+	seq := -1
 	for {
-		d := json.NewDecoder(s.backendConnection)
+		d := json.NewDecoder(s.heartbeatConnection)
 		if !s.backendUp {
-			fmt.Printf("Detected failure on %s at %v\n", s.backend, time.Now())
+			fmt.Printf("Detected failure on %s at %v\n",
+				s.backend,
+				time.Now().UTC())
 			s.connectToBackend()
+			s.startHeartbeatMonitor()
 			continue
 		}
 
 		var rpcMsg rpc.RPCMapping
 		err := d.Decode(&rpcMsg)
 		if err != nil {
-			fmt.Println("encountered error")
-			fmt.Println(err)
-			s.backendConnection.Close()
-			s.backendUp = false
+			if time.Now().Sub(lastTimeReceived) > time.Second*35 {
+				fmt.Println(err)
+				s.backendConnection.Close()
+				s.heartbeatConnection.Close()
+				s.backendUp = false
+			}
 			continue
 		}
 		rpcType, exists := rpcMsg["type"]
-		if !exists || rpcType.(string) != "Heartbeat" {
-			log.Fatal("did not receive heartbeat")
+		if exists && rpcType.(string) == "Heartbeat" {
+			receivedSeq := int(rpcMsg["seq"].(float64))
+			if receivedSeq > seq {
+				seq = receivedSeq
+				lastTimeReceived = time.Now()
+			}
 		}
 
 		fmt.Println("received heartbeat")

@@ -7,14 +7,16 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 )
 
 type Server struct {
 	db *database.Database
 	// Mapping of handlers that takes a server, a net connection, and an rpc
-	rpcHandlers    map[string]func(*Server, *json.Encoder, rpc.RPCMapping) error
-	connectedUsers map[string]net.Conn
+	rpcHandlers       map[string]func(*Server, net.Conn, rpc.RPCMapping) error
+	connectedUserLock *sync.RWMutex
+	connectedUsers    map[string]net.Conn
 }
 
 /** Creates an empty server object
@@ -23,7 +25,8 @@ type Server struct {
 func CreateServer() *Server {
 	return &Server{
 		database.CreateDatabase(),
-		make(map[string]func(*Server, *json.Encoder, rpc.RPCMapping) error),
+		make(map[string]func(*Server, net.Conn, rpc.RPCMapping) error),
+		&sync.RWMutex{},
 		make(map[string]net.Conn)}
 }
 
@@ -53,15 +56,18 @@ func (s *Server) HandleConnection(c net.Conn) {
 	defer c.Close()
 	ip := c.RemoteAddr().String()
 	log.Println(ip)
-	s.connectedUsers[ip] = c
 	d := json.NewDecoder(c)
-	go heartbeat(s, c)
+	s.connectedUserLock.Lock()
+	s.connectedUsers[ip] = c
+	s.connectedUserLock.Unlock()
 	for {
 		var rpcMsg rpc.RPCMapping
 		d.Decode(&rpcMsg)
 
 		// Checks to see if the heartbeat sender terminated the connection
+		s.connectedUserLock.RLock()
 		_, stillAlive := s.connectedUsers[ip]
+		s.connectedUserLock.RUnlock()
 		if !stillAlive {
 			break
 		}
@@ -71,9 +77,8 @@ func (s *Server) HandleConnection(c net.Conn) {
 			break
 		}
 		log.Println(rpcMsg)
-		encoder := json.NewEncoder(c)
 		// Handle RPC
-		err := s.rpcHandlers[rpcType.(string)](s, encoder, rpcMsg)
+		err := s.rpcHandlers[rpcType.(string)](s, c, rpcMsg)
 		if err != nil {
 			switch err.(type) {
 			case *InternalError:
@@ -89,16 +94,18 @@ func (s *Server) HandleConnection(c net.Conn) {
  * @param s server pointer
  * @param c connection to send the heartbeat across
  */
-func heartbeat(s *Server, c net.Conn) {
+func Heartbeat(s *Server, c net.Conn) {
+	ip := c.RemoteAddr().String()
 	seq := 0
 	for {
 		c.SetDeadline(time.Now().Add(time.Second * 20))
 		encoder := json.NewEncoder(c)
 		err := encoder.Encode(rpc.HeartbeatRPC{"Heartbeat", seq})
 		if err != nil {
-			ip := c.RemoteAddr().String()
 			log.Printf("removing %s\n", ip)
+			s.connectedUserLock.Lock()
 			delete(s.connectedUsers, ip)
+			s.connectedUserLock.Unlock()
 			return
 		}
 		seq += 1
