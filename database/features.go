@@ -17,6 +17,12 @@ type Feature struct {
  */
 func (d *Database) calcBucket(id int) int {
 	bucketSize := len(d.features) / len(d.featureLocks)
+	if bucketSize <= 1 || bucketSize == 0 {
+		return 0
+	}
+	if id/bucketSize >= len(d.featureLocks) {
+		return len(d.featureLocks) - 1
+	}
 	return id / bucketSize
 }
 
