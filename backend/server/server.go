@@ -2,6 +2,7 @@ package server
 
 import (
 	"cool-lang-features/database"
+	"cool-lang-features/inc"
 	"cool-lang-features/rpc"
 	"encoding/json"
 	"log"
@@ -17,6 +18,7 @@ type Server struct {
 	rpcHandlers       map[string]func(*Server, net.Conn, rpc.RPCMapping) error
 	connectedUserLock *sync.RWMutex
 	connectedUsers    map[string]net.Conn
+	connManager       *inc.ConnectionManager
 }
 
 /** Creates an empty server object
@@ -27,7 +29,8 @@ func CreateServer() *Server {
 		database.CreateDatabase(),
 		make(map[string]func(*Server, net.Conn, rpc.RPCMapping) error),
 		&sync.RWMutex{},
-		make(map[string]net.Conn)}
+		make(map[string]net.Conn),
+		nil}
 }
 
 /** Spins up the service to listen to external tcp requests
