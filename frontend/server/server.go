@@ -24,7 +24,7 @@ type Router struct {
 type Server struct {
 	db                  *database.Database
 	router              *Router
-	backend             string
+	backends            []string
 	backendConnection   net.Conn
 	heartbeatConnection net.Conn
 	backendUp           bool
@@ -40,11 +40,10 @@ func CreateRouter() *Router {
 /** Creates an empty server object
  * @return pointer to created server
  */
-func CreateServer(backendHostname string, backendPort int) *Server {
-	backend := backendHostname + ":" + strconv.Itoa(backendPort)
+func CreateServer(backends []string) *Server {
 	server := &Server{database.CreateDatabase(),
 		CreateRouter(),
-		backend,
+		backends,
 		nil,
 		nil,
 		false}
@@ -57,13 +56,13 @@ func CreateServer(backendHostname string, backendPort int) *Server {
  * lhs server pointer
  */
 func (s *Server) connectToBackend() {
-	conn, err := net.Dial("tcp", s.backend)
+	conn, err := net.Dial("tcp", s.backends[0])
 	s.backendConnection = conn
 	s.backendUp = err == nil
 }
 
 func (s *Server) startHeartbeatMonitor() {
-	conn, err := net.Dial("tcp", s.backend)
+	conn, err := net.Dial("tcp", s.backends[0])
 	s.heartbeatConnection = conn
 	s.backendUp = err == nil
 	if s.backendUp {
@@ -86,7 +85,7 @@ func heartbeatMonitor(s *Server) {
 		d := json.NewDecoder(s.heartbeatConnection)
 		if !s.backendUp {
 			fmt.Printf("Detected failure on %s at %v\n",
-				s.backend,
+				s.backends[0],
 				time.Now().UTC())
 			s.connectToBackend()
 			s.startHeartbeatMonitor()

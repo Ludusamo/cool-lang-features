@@ -1,41 +1,76 @@
 package inc
 
 import (
-	"cool-lang-features/rpc"
 	"encoding/json"
+	"log"
 	"net"
 	"strconv"
 	"sync"
 )
 
+type Transaction struct {
+	TransactID int
+	Voted      map[string]int
+}
+
+func CreateTransaction(id int) Transaction {
+	return Transaction{id, make(map[string]int)}
+}
+
+type MsgType int
+
+type Msg struct {
+	Type    MsgType
+	Payload Transaction
+	PID     int
+	RPID    int
+	Addr    string
+}
+
+type OutgoingMessage struct {
+	Msg  Msg
+	Addr string
+	PID  int
+}
+
+type IncomingMessage struct {
+	Msg  Msg
+	Addr string
+	PID  int
+}
+
 type Conn struct {
-	pid  int
-	in   chan rpc.RPCMapping
-	out  chan rpc.RPCMapping
-	addr string
-	up   bool
+	pid int
+	In  chan IncomingMessage
+	Out chan OutgoingMessage
+	up  bool
+}
+
+func (c *Conn) Send(addr string, pid int, msg Msg) {
+	c.Out <- OutgoingMessage{msg, addr, pid}
 }
 
 type ConnectionManager struct {
-	conns      map[string]net.Conn
-	localConns map[int]*Conn
-	connsLock  *sync.RWMutex
+	conns         map[string]net.Conn
+	localConns    map[int]*Conn
+	connsLock     *sync.RWMutex
+	newConnection chan *Conn
 }
 
 func sendQueued(manager *ConnectionManager, c *Conn) {
 	for {
-		conn, up := manager.conns[c.addr]
+		outgoingMsg := <-c.Out
+		log.Printf("Sending msg to %s\n", outgoingMsg.Addr)
+		conn, up := manager.conns[outgoingMsg.Addr]
 		if !up {
 			c.up = false
 			continue
 		}
-		msg, ok := <-c.out
-		if ok {
-			encoder := json.NewEncoder(conn)
-			err := encoder.Encode(msg)
-			if err != nil {
-				c.up = false
-			}
+		outgoingMsg.Msg.Addr = conn.LocalAddr().String()
+		encoder := json.NewEncoder(conn)
+		err := encoder.Encode(outgoingMsg.Msg)
+		if err != nil {
+			c.up = false
 		}
 	}
 }
@@ -43,19 +78,14 @@ func sendQueued(manager *ConnectionManager, c *Conn) {
 func CreateConnectionManager(port int) *ConnectionManager {
 	manager := ConnectionManager{make(map[string]net.Conn),
 		make(map[int]*Conn),
-		&sync.RWMutex{}}
+		&sync.RWMutex{},
+		make(chan *Conn)}
 	go func() {
 		ln, _ := net.Listen("tcp", ":"+strconv.Itoa(port))
 		for {
 			conn, err := ln.Accept()
 			if err == nil {
-				addr := conn.RemoteAddr().String()
-				if _, exists := manager.conns[addr]; !exists {
-					manager.connsLock.Lock()
-					manager.conns[addr] = conn
-					manager.connsLock.Unlock()
-					go handleTCPConn(&manager, conn)
-				}
+				go handleTCPConn(&manager, conn)
 			}
 		}
 	}()
@@ -65,41 +95,46 @@ func CreateConnectionManager(port int) *ConnectionManager {
 func handleTCPConn(cm *ConnectionManager, conn net.Conn) {
 	d := json.NewDecoder(conn)
 	for {
-		var rpcMsg rpc.RPCMapping
-		d.Decode(&rpcMsg)
-		pid, hasId := rpcMsg["pid"]
-		if !hasId {
-			continue
-		}
-		localConn, localConnExists := cm.localConns[int(pid.(float64))]
+		var msg Msg
+		d.Decode(&msg)
+		log.Println(msg.Addr)
+		localConn, localConnExists := cm.localConns[msg.PID]
 		if !localConnExists {
 			continue
 		}
-		localConn.in <- rpcMsg
+		localConn.In <- IncomingMessage{msg,
+			msg.Addr,
+			msg.RPID}
 	}
 }
 
-func (c *ConnectionManager) Open(addr string, pid int) (*Conn, error) {
+func (c *ConnectionManager) GetLocalConn(pid int) *Conn {
+	conn, open := c.localConns[pid]
+	if !open {
+		c.localConns[pid] = &Conn{
+			pid,
+			make(chan IncomingMessage),
+			make(chan OutgoingMessage),
+			true}
+		go sendQueued(c, c.localConns[pid])
+		conn = c.localConns[pid]
+	}
+	return conn
+}
+
+func (c *ConnectionManager) Open(addr string) error {
 	c.connsLock.RLock()
-	conn, open := c.conns[addr]
+	_, open := c.conns[addr]
 	c.connsLock.RUnlock()
 	if !open {
 		newConn, err := net.Dial("tcp", addr)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		go handleTCPConn(c, conn)
+		go handleTCPConn(c, newConn)
 		c.connsLock.Lock()
 		c.conns[addr] = newConn
 		c.connsLock.Unlock()
-		conn = newConn
 	}
-	c.localConns[pid] = &Conn{
-		pid,
-		make(chan rpc.RPCMapping),
-		make(chan rpc.RPCMapping),
-		addr,
-		true}
-	go sendQueued(c, c.localConns[pid])
-	return c.localConns[pid], nil
+	return nil
 }

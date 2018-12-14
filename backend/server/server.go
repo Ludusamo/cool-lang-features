@@ -2,7 +2,7 @@ package server
 
 import (
 	"cool-lang-features/database"
-	"cool-lang-features/inc"
+	"cool-lang-features/raft"
 	"cool-lang-features/rpc"
 	"encoding/json"
 	"log"
@@ -18,19 +18,21 @@ type Server struct {
 	rpcHandlers       map[string]func(*Server, net.Conn, rpc.RPCMapping) error
 	connectedUserLock *sync.RWMutex
 	connectedUsers    map[string]net.Conn
-	connManager       *inc.ConnectionManager
+	raftNode          *raft.RaftNode
+	backends          []string
 }
 
 /** Creates an empty server object
  * @return pointer to created server
  */
-func CreateServer() *Server {
+func CreateServer(backends []string) *Server {
 	return &Server{
 		database.CreateDatabase(),
 		make(map[string]func(*Server, net.Conn, rpc.RPCMapping) error),
 		&sync.RWMutex{},
 		make(map[string]net.Conn),
-		nil}
+		nil,
+		backends}
 }
 
 /** Spins up the service to listen to external tcp requests
@@ -38,6 +40,7 @@ func CreateServer() *Server {
  * @param port integer port where the service will listen from
  */
 func (s *Server) Start(port int) {
+	s.raftNode = raft.CreateRaftNode(port+1, s.backends)
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Fatal(err)

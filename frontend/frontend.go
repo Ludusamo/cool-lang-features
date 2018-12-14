@@ -25,11 +25,16 @@ func extractHostAndPort(hostAndPort string) (string, int) {
 
 func main() {
 	portFlag := flag.Int("listen", 8080, "port number for HTTP requests")
-	backend := flag.String("backend", ":8090", "hostname and port of backend")
+	backendList := flag.String("backend", ":8090", "hostnames and ports of backends")
 	flag.Parse()
 	fmt.Println(*portFlag)
-	host, port := extractHostAndPort(*backend)
-	svr := server.CreateServer(host, port)
+
+	var backends []string
+	for _, backend := range strings.Split(*backendList, ",") {
+		host, port := extractHostAndPort(backend)
+		backends = append(backends, host+":"+strconv.Itoa(port))
+	}
+	svr := server.CreateServer(backends)
 	svr.RegisterHandlers()
 	svr.Start(*portFlag)
 }

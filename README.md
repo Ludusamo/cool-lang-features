@@ -68,6 +68,20 @@ These heartbeats were sequenced. If the front end does not receive an incremente
 I considered ping-ack as well, but I figured that heartbeat would be better for longer running processes. I thought ping-ack would be more network traffic than necessary.
 A ping-ack would have to be done on an interval just like the heartbeat, but at no point do we want to stop receiving confirmation. So instead of sending a request one way and receiving one back, I decided it was better just to subscribe once and continually receive confirmation.
 
+#### Update for Part 4
+
+My part 4 is incomplete. Due to my own poor time management, I find myself very close to the deadline with a pile of poorly written code written in a caffeinated, sleep deprived craze. I decided rather than keep cutting corners and rushing and making things worse without much benefit, I would just tell you the status and what my plans were.
+
+I was going to implement Raft because it was the schema that I understood the best. Raft is relatively simpler than PAXOS/MultiPAXOS but does not perform as well when there is high leader instability. That was a tradeoff I was willing to make for this assignment.
+The bulk of the new code I wrote is under `/inc` and `/raft` if you want to see where I was at.
+
+Some of the mistakes I made:
+
+1. Trying to go halfway with my `ConnectionManager`
+    - I tried to only use it for the Raft implementation, this ended up just becoming messy trying to juggle normal connections and this new manager
+2. Trying to cut corners on implementation
+    - My overall code base became very confused because I was trying to keep my same RPC structure that I had before, but then just tried to tack on consensus to agree on mutation on the store. This probably could have worked, but I should have taken more time to plan.
+
 ### Additional Resources
 
 - http://elm-lang.org/
@@ -90,3 +104,7 @@ No additional insights.
 
 I really like this assignment the further we get into it. It is fun to have a challenging architecture to model, and I like having a project that could actually be useful after I am done writing it.
 It has the potential to not be throwaway work, and I find the assignment very practical.
+
+#### Update for Part 4
+
+I still really enjoyed this project. I just really shot myself in the foot this finals season. Thank you for a great semester professor, I learned a lot.
